@@ -563,6 +563,16 @@ def cmd_verify(a) -> int:
             _note(True, f"Threads 게시 한도: 24시간 {used}/{total}")
             fc = th.followers_count()
             _note(fc is not None, f"Threads 팔로워: {fc}" if fc is not None else "Threads 팔로워 읽기 실패 (threads_manage_insights 권한 확인)")
+            posts = [p for p in th.recent_posts(5) if p.get("media_type") != "REPOST_FACADE"]
+            if posts:
+                p0 = posts[0]
+                ins = th.media_insights(p0["id"])
+                reps = th.replies(p0["id"])
+                ext = sum(1 for r in reps if not r.get("is_reply_owned_by_me"))
+                good = bool(ins)
+                _note(good, f"최근 글 지표 읽기 ({(p0.get('permalink') or '').rsplit('/', 1)[-1]}): "
+                            + (", ".join(f"{k} {v}" for k, v in ins.items()) if ins else "실패")
+                            + f" · 답글 {len(reps)}(외부 {ext})")
         except Exception as e:
             ok = False
             _note(False, f"Threads 확인 실패: {e}")
