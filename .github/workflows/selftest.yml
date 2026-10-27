@@ -1,0 +1,56 @@
+# Threads가 GitHub Pages 이미지를 가져가는지 시험한다. 캐러셀 컨테이너까지만 만들고 게시하지 않는다.
+# 시험 이미지는 내용 없는 회색 카드다(site/selftest/).
+name: selftest
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['site/selftest/**', '.github/workflows/selftest.yml']
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.d.outputs.page_url }}
+    outputs:
+      page_url: ${{ steps.d.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - run: pip install -q -r requirements.txt
+      - run: python -m publisher.cli build-site
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+      - id: d
+        uses: actions/deploy-pages@v5
+
+  container:
+    needs: deploy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - run: pip install -q -r requirements.txt
+      - env:
+          THREADS_TOKEN: ${{ secrets.THREADS_TOKEN }}
+          PAGES_URL: ${{ needs.deploy.outputs.page_url }}
+        run: python -m publisher.cli selftest --pages-url "$PAGES_URL"

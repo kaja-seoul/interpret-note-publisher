@@ -1,12 +1,18 @@
 # 게시기: Notion 콘텐츠 캘린더의 '승인' 글을 Threads 공식 API로 올린다.
 # 07:47·21:17(KST)에 깨어나 준비 → 카드 공개 → 08:07·21:37 + 0~9분에 게시.
 # GitHub 예약 실행은 몇 분 늦게 깨는 일이 잦아 20분 일찍 깨운다.
+# 예약 실행은 publisher/config.py의 LIVE가 True일 때만 올린다.
+# dryrun/request.txt에 캘린더 행 ID를 적어 main에 올리면 그 행으로 드라이런만 돈다(게시 안 함).
+# 끝나면 Pages를 저장소 상태(게시된 카드만)로 다시 공개해, 게시 안 된 카드는 내려간다.
 name: publish
 
 on:
   schedule:
     - cron: '47 22 * * *'   # KST 07:47 → 08:07 슬롯
     - cron: '17 12 * * *'   # KST 21:17 → 21:37 슬롯
+  push:
+    branches: [main]
+    paths: ['dryrun/request.txt']
   workflow_dispatch:
     inputs:
       slot:
@@ -40,6 +46,8 @@ jobs:
       has_post: ${{ steps.p.outputs.has_post }}
       key: ${{ steps.p.outputs.key }}
       notices: ${{ steps.p.outputs.notices }}
+      dry: ${{ steps.s.outputs.dry }}
+      manual: ${{ steps.s.outputs.manual }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -47,25 +55,34 @@ jobs:
           python-version: '3.12'
       - run: pip install -q -r requirements.txt
       - id: s
-        name: 슬롯 정하기
+        name: 슬롯·대상·드라이런 정하기
         env:
           EVENT: ${{ github.event_name }}
           SCHED: ${{ github.event.schedule }}
           IN_SLOT: ${{ inputs.slot }}
+          IN_PAGE: ${{ inputs.page_id }}
+          IN_DRY: ${{ inputs.dry_run }}
         run: |
-          if [ "$EVENT" = "workflow_dispatch" ]; then slot="$IN_SLOT"
+          page=""; dry=false; manual=false
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            slot="$IN_SLOT"; page="$IN_PAGE"; dry="$IN_DRY"; manual=true
+          elif [ "$EVENT" = "push" ]; then
+            slot="08:07"; page="$(tr -d ' \r\n' < dryrun/request.txt)"; dry=true; manual=true
           elif [ "$SCHED" = "47 22 * * *" ]; then slot="08:07"
           else slot="21:37"; fi
-          echo "slot=$slot" >> "$GITHUB_OUTPUT"
+          { echo "slot=$slot"; echo "page=$page"; echo "dry=$dry"; echo "manual=$manual"; } >> "$GITHUB_OUTPUT"
+          echo "슬롯 $slot · 대상 ${page:-자동} · 드라이런 $dry"
       - id: p
         name: 올릴 글 고르기 · 형식 검사 · 카드 받기
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           SLOT: ${{ steps.s.outputs.slot }}
-          PAGE_ID: ${{ inputs.page_id }}
+          PAGE_ID: ${{ steps.s.outputs.page }}
+          DRY: ${{ steps.s.outputs.dry }}
         run: |
           args=(--slot "$SLOT")
           if [ -n "$PAGE_ID" ]; then args+=(--page-id "$PAGE_ID"); fi
+          if [ "$DRY" = "true" ]; then args+=(--dry-run); fi
           python -m publisher.cli prepare "${args[@]}"
       - name: 준비물 넘기기
         if: steps.p.outputs.has_post == 'true'
@@ -128,8 +145,8 @@ jobs:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           KEY: ${{ needs.prepare.outputs.key }}
           PAGES_URL: ${{ needs.pages.outputs.page_url }}
-          DRY: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
-          MANUAL: ${{ github.event_name == 'workflow_dispatch' }}
+          DRY: ${{ needs.prepare.outputs.dry }}
+          MANUAL: ${{ needs.prepare.outputs.manual }}
         run: |
           args=(--key "$KEY" --pages-url "$PAGES_URL")
           if [ "$DRY" = "true" ]; then args+=(--dry-run); fi
@@ -148,6 +165,32 @@ jobs:
         if: always()
         run: |
           if [ -s notices.txt ]; then cat notices.txt; echo "::error title=게시기 알림::Notion 그 글 행의 댓글을 확인하세요"; exit 1; fi
+
+  tidy:
+    name: Pages 정리 (게시된 카드만 남김)
+    needs: [prepare, pages, post]
+    if: always() && needs.pages.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - run: pip install -q -r requirements.txt
+      - run: python -m publisher.cli build-site
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          name: github-pages-tidy
+          path: _site
+      - uses: actions/deploy-pages@v5
+        with:
+          artifact_name: github-pages-tidy
 
   report:
     needs: [prepare, pages, post]

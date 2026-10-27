@@ -6,6 +6,11 @@ from zoneinfo import ZoneInfo
 
 KST = ZoneInfo("Asia/Seoul")
 
+# 예약 게시 스위치. False면 07:47·21:17 예약 실행은 아무것도 올리지 않는다.
+# 손으로 돌리는 시험(page_id 지정)과 드라이런은 이 값과 상관없이 된다.
+# 운영자가 '게시기로 넘긴다'고 정한 뒤에만 True로 바꾼다 (런이 카드를 Notion에 붙이고, 손 게시를 멈춘 뒤).
+LIVE = False
+
 # Notion '스레드 운영' 데이터 소스 (collection:// ID)
 CALENDAR_DS = os.environ.get("NOTION_CALENDAR_DS", "90d2816a-a68b-4a74-82e5-bff83f099149")
 POSTLOG_DS = os.environ.get("NOTION_POSTLOG_DS", "84c80006-4e6d-489d-a9da-e0cacbc7b79a")
@@ -18,6 +23,8 @@ JITTER_MAX_MIN = 9          # 0~9분 무작위로 늦춤 (10/27 운영자 선택
 LATE_LIMIT_MIN = 90         # 목표 시각보다 90분 넘게 늦게 깨면 올리지 않고 다음 슬롯으로
 OVERDUE_FRESH_HOURS = 36    # 늦은 승인 글은 예정 시각 36시간 안까지만 (스킬 7장 신선도)
 DAILY_MAX = 2               # 하루 최대 2글 (스킬 2장)
+CARDS_MIN = 1               # 카드 1(원문 카드)은 늘 넣는다 (스킬 8장). 메모에 '카드 없음'이 있으면 예외
+NO_CARD_FLAG = "카드 없음"
 
 ACCOUNT = os.environ.get("THREADS_USERNAME", "interpret.note")
 

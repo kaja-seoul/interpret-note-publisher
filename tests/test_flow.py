@@ -119,6 +119,7 @@ class FlowTests(unittest.TestCase):
             mock.patch.object(cli.requests, "head", lambda url, timeout=0, allow_redirects=True: Resp()),
             mock.patch.object(cli, "wait_until", lambda t: None),
             mock.patch.object(cli.time, "sleep", lambda s: None),
+            mock.patch.object(cli.C, "LIVE", True),
         ]
         for p in self.patches:
             p.start()
@@ -189,6 +190,35 @@ class FlowTests(unittest.TestCase):
         self.nt.row["properties"]["상태"]["status"]["name"] = "승인 대기"
         self.run_cli("post", "--key", key, "--pages-url", "https://o.github.io/r/")
         self.assertEqual(self.th.containers, [])
+
+    def test_live_off_skips_schedule(self):
+        with mock.patch.object(cli.C, "LIVE", False):
+            self.assertEqual(self.run_cli("prepare", "--slot", "08:07"), 0)
+        self.assertFalse((self.tmp / "staged").exists())
+
+    def test_no_cards_blocked(self):
+        self.nt.row["properties"]["카드"]["files"] = []
+        self.assertEqual(self.run_cli("prepare", "--slot", "08:07"), 1)
+        self.assertTrue(any("카드" in c for c in self.nt.comments))
+
+    def test_no_cards_allowed_with_memo(self):
+        self.nt.row["properties"]["카드"]["files"] = []
+        self.nt.row["properties"]["메모"]["rich_text"][0]["plain_text"] = "변수 B · 카드 없음"
+        self.assertEqual(self.run_cli("prepare", "--slot", "08:07"), 0)
+
+    def test_dry_run_on_pending_row(self):
+        self.nt.row["properties"]["상태"]["status"]["name"] = "승인 대기"
+        with mock.patch.object(cli.C, "LIVE", False):
+            self.assertEqual(self.run_cli("prepare", "--slot", "08:07", "--page-id", "x", "--dry-run"), 0)
+        key = next((self.tmp / "staged").iterdir()).name
+        self.assertEqual(self.run_cli("post", "--key", key, "--pages-url", "https://o.github.io/r/", "--now"), 0)
+        self.assertEqual(self.th.published, [])
+        self.assertEqual(self.th.containers[0][0], "post")
+
+    def test_pending_row_not_posted_for_real(self):
+        self.nt.row["properties"]["상태"]["status"]["name"] = "승인 대기"
+        self.assertEqual(self.run_cli("prepare", "--slot", "08:07", "--page-id", "x"), 0)
+        self.assertFalse((self.tmp / "staged").exists())
 
     def test_format_fail(self):
         self.nt.row["properties"]["본문"]["rich_text"][0]["plain_text"] = "첫 줄이 너무 길어서 스물다섯 자를 넘는 문장이다 정말로\n둘째"

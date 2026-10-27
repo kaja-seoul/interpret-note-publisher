@@ -138,11 +138,13 @@ def posted_today(day) -> int:
 
 
 # ---------- prepare ----------
-def pick(nt: Notion, slot: str, now: datetime, page_id: str | None) -> tuple[dict | None, datetime | None]:
+def pick(nt: Notion, slot: str, now: datetime, page_id: str | None, dry_run: bool = False) -> tuple[dict | None, datetime | None]:
     if page_id:
         page = nt.page(page_id)
-        if select_of(page, C.P_STATUS) != C.S_APPROVED:
-            notice(nt, page_id, f"시험 대상 행의 상태가 '{select_of(page, C.P_STATUS)}'다. '승인'인 행만 올린다.")
+        status = select_of(page, C.P_STATUS)
+        # 드라이런은 게시하지 않으니 '승인 대기'·'보류' 행도 시험할 수 있다
+        if status != C.S_APPROVED and not (dry_run and status != C.S_POSTED):
+            notice(nt, page_id, f"시험 대상 행의 상태가 '{status}'다. '승인'인 행만 올린다.")
             return None, None
         if url_of(page, C.P_LINK):
             notice(nt, page_id, "이미 게시 링크가 있는 행이다. 다시 올리지 않는다.")
@@ -199,7 +201,12 @@ def cmd_prepare(a) -> int:
     nt = notion()
     now = now_kst()
     slot = a.slot
-    page, slot_dt = pick(nt, slot, now, a.page_id)
+    if not a.page_id and not C.LIVE:
+        log("예약 게시가 꺼져 있다 (config.LIVE = False). 아무것도 올리지 않는다.")
+        gh_output(has_post="false")
+        summary(f"### {now:%m/%d} {slot}: 예약 게시 꺼짐 (운영자가 넘기기 전)")
+        return 0
+    page, slot_dt = pick(nt, slot, now, a.page_id, a.dry_run)
     if not page:
         log("올릴 글 없음.")
         gh_output(has_post="false")
@@ -219,6 +226,8 @@ def cmd_prepare(a) -> int:
     problems = list(res.problems) + checks.check_reply(reply)
     cards = cards_ordered(page)
     problems += checks.check_cards([f["name"] for f in cards])
+    if len(cards) < C.CARDS_MIN and C.NO_CARD_FLAG not in text_of(page, C.P_MEMO):
+        problems.append(f"'카드' 칸에 카드가 없다 (카드 1은 늘 넣는다. 카드 없이 올리려면 메모에 '{C.NO_CARD_FLAG}')")
     log(f"글: {title}\n{res.summary()}")
     if problems:
         notice(nt, pid, "형식 검사에서 탈락해 올리지 않는다.\n" + "\n".join(f"- {p}" for p in problems))
@@ -277,6 +286,7 @@ def cmd_prepare(a) -> int:
         "target": target.isoformat(),
         "prepared_at": now.isoformat(),
         "snapshot": snapshot(page),
+        "dry_run": bool(a.dry_run),
     }
     (out / "post.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
     gh_output(has_post="true", key=key, card_count=str(len(saved)))
@@ -358,8 +368,9 @@ def cmd_post(a) -> int:
             return 0
         wait_until(target)
 
+    dry = a.dry_run or meta.get("dry_run")
     page = nt.page(pid)
-    if select_of(page, C.P_STATUS) != C.S_APPROVED:
+    if not dry and select_of(page, C.P_STATUS) != C.S_APPROVED:
         log(f"상태가 '{select_of(page, C.P_STATUS)}'로 바뀌어 올리지 않는다.")
         summary(f"### 올리지 않음: 준비 뒤 상태가 '{select_of(page, C.P_STATUS)}'로 바뀜")
         return 0
@@ -390,7 +401,7 @@ def cmd_post(a) -> int:
     if media_id is None:
         cid = th.create_post_container(meta["text"], urls)
         th.wait_ready(cid)
-        if a.dry_run:
+        if dry:
             log(f"[드라이런] 컨테이너 준비 완료({cid}). 게시하지 않는다. 컨테이너는 24시간 뒤 사라진다.")
             if meta["reply"]:
                 log("[드라이런] 첫 답글은 본글이 있어야 만들 수 있어 건너뛴다.")
@@ -401,7 +412,7 @@ def cmd_post(a) -> int:
         except Exception as e:
             notice(nt, pid, f"게시 실패: {e}")
             raise
-    elif a.dry_run:
+    elif dry:
         log("[드라이런] 이미 올라간 글이라 할 일이 없다.")
         return 0
 
@@ -478,6 +489,28 @@ def cmd_post(a) -> int:
     return 0
 
 
+# ---------- selftest ----------
+def cmd_selftest(a) -> int:
+    """Threads가 GitHub Pages 이미지를 가져가는지 본다. 캐러셀 컨테이너까지만 만들고 게시하지 않는다."""
+    base = a.pages_url.rstrip("/") + "/selftest/"
+    urls = [base + "t1.png", base + "t2.png"]
+    wait_public(urls)
+    th = threads()
+    me = th.me()
+    if me.get("username") != C.ACCOUNT:
+        _note(False, f"토큰 계정이 @{me.get('username')}다")
+        return 1
+    th.user_id = me["id"]
+    try:
+        cid = th.create_post_container("게시기 시험 (게시하지 않음)", urls)
+        th.wait_ready(cid)
+    except Exception as e:
+        _note(False, f"캐러셀 컨테이너 실패 (Pages 이미지 주소를 Threads가 못 가져감?): {e}")
+        return 1
+    _note(True, f"캐러셀 컨테이너 FINISHED: Threads가 Pages 이미지 2장을 가져갔다. 게시는 안 함 (컨테이너 {cid}는 24시간 뒤 사라짐)")
+    return 0
+
+
 # ---------- verify ----------
 CAL_PROPS = [C.P_TITLE, C.P_STATUS, C.P_SLOT, C.P_DATE, C.P_BODY, C.P_REPLY, C.P_CARDS, C.P_LINK,
              C.P_SERIES, C.P_NUMBER, C.P_VAR, C.P_MEMO, C.P_SOURCE]
@@ -543,6 +576,7 @@ def main(argv=None) -> int:
     p.add_argument("--slot", required=True, choices=list(C.SLOTS))
     p.add_argument("--page-id", default="")
     p.add_argument("--now", action="store_true")
+    p.add_argument("--dry-run", action="store_true")
     p = sub.add_parser("post")
     p.add_argument("--key", required=True)
     p.add_argument("--pages-url", required=True)
@@ -550,8 +584,11 @@ def main(argv=None) -> int:
     p.add_argument("--now", action="store_true")
     sub.add_parser("build-site")
     sub.add_parser("verify")
+    p = sub.add_parser("selftest")
+    p.add_argument("--pages-url", required=True)
     a = ap.parse_args(argv)
-    fn = {"prepare": cmd_prepare, "post": cmd_post, "build-site": cmd_build_site, "verify": cmd_verify}[a.cmd]
+    fn = {"prepare": cmd_prepare, "post": cmd_post, "build-site": cmd_build_site, "verify": cmd_verify,
+          "selftest": cmd_selftest}[a.cmd]
     rc = fn(a)
     if a.cmd in ("prepare", "post"):
         gh_output(notices="true" if NOTICES.exists() and NOTICES.read_text(encoding="utf-8").strip() else "false")
