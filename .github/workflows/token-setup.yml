@@ -1,0 +1,26 @@
+# 첫 토큰 발급: Secrets의 THREADS_AUTH_CODE(1시간 안에 쓸 것)를 장기 토큰(60일)으로 바꿔 THREADS_TOKEN에 저장한다.
+name: token-setup
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  exchange:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -q -r requirements.txt
+      - env:
+          THREADS_APP_ID: ${{ secrets.THREADS_APP_ID }}
+          THREADS_APP_SECRET: ${{ secrets.THREADS_APP_SECRET }}
+          THREADS_AUTH_CODE: ${{ secrets.THREADS_AUTH_CODE }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+          REDIRECT_URI: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/callback.html
+        run: python -m publisher.tokens exchange

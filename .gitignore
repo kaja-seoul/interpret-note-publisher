@@ -1,0 +1,5 @@
+staged/
+_site/
+notices*.txt
+__pycache__/
+*.pyc

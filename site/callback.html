@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Threads 토큰 받기</title>
+<style>
+  :root { --bg:#F6F4EF; --ink:#1B1B1F; --quiet:#6B6A70; --line:#D9D6CF; --brand:#D6176E; --card:#fff; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#151518; --ink:#F2F0EA; --quiet:#A3A1A8; --line:#34333A; --card:#1F1F24; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family: system-ui, -apple-system, "Noto Sans KR", sans-serif;
+         word-break: keep-all; line-height:1.55; }
+  main { max-width: 560px; margin: 0 auto; padding: 40px 16px 64px; }
+  h1 { font-size: 24px; margin: 0 0 6px; letter-spacing:-0.3px; }
+  .sub { color: var(--quiet); margin: 0 0 28px; font-size: 15px; }
+  .box { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 20px; margin-bottom: 16px; }
+  label { display:block; font-size: 14px; color: var(--quiet); margin-bottom: 8px; }
+  input { width:100%; font: inherit; font-size: 17px; padding: 12px 14px; border-radius: 10px; border:1px solid var(--line);
+          background: var(--bg); color: var(--ink); }
+  button, a.btn { display:inline-block; margin-top: 14px; font: inherit; font-weight: 700; font-size: 16px; padding: 12px 18px;
+          border-radius: 10px; border: 0; background: var(--brand); color: #fff; text-decoration: none; cursor: pointer; }
+  button[disabled] { opacity: .4; cursor: default; }
+  code { display:block; font: 15px/1.4 ui-monospace, Menlo, monospace; background: var(--bg); border:1px dashed var(--line);
+         padding: 12px; border-radius: 10px; word-break: break-all; user-select: all; }
+  ol { padding-left: 20px; margin: 8px 0 0; }
+  li { margin: 6px 0; }
+  .warn { color: var(--brand); font-weight: 700; }
+  .hide { display:none; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Threads 토큰 받기</h1>
+  <p class="sub">이 페이지는 코드를 보여 주기만 한다. 아무 데도 보내지 않는다.</p>
+
+  <section id="start" class="box hide">
+    <label for="appid">Threads 앱 ID (Meta 앱 → Use cases → Threads API → Settings)</label>
+    <input id="appid" inputmode="numeric" autocomplete="off" placeholder="숫자만">
+    <button id="go" disabled>Threads에서 권한 주기</button>
+  </section>
+
+  <section id="got" class="box hide">
+    <label>받은 코드 (1시간 안에, 한 번만 쓸 수 있다)</label>
+    <code id="code"></code>
+    <button id="copy">코드 복사</button>
+    <ol>
+      <li>GitHub 저장소 → <b>Settings</b> → <b>Secrets and variables</b> → <b>Actions</b></li>
+      <li><b>New repository secret</b> → Name <b>THREADS_AUTH_CODE</b> → Secret에 붙여넣기 → <b>Add secret</b></li>
+      <li><b>Actions</b> 탭 → <b>token-setup</b> → <b>Run workflow</b></li>
+    </ol>
+    <p class="warn">채팅에는 붙이지 말 것.</p>
+  </section>
+
+  <section id="err" class="box hide">
+    <label>권한 주기가 안 됐다</label>
+    <code id="errmsg"></code>
+  </section>
+</main>
+<script>
+  const q = new URLSearchParams(location.search);
+  const here = location.origin + location.pathname;
+  const show = id => document.getElementById(id).classList.remove('hide');
+  if (q.get('code')) {
+    const code = q.get('code').split('#')[0];
+    document.getElementById('code').textContent = code;
+    show('got');
+    document.getElementById('copy').onclick = async (e) => {
+      try { await navigator.clipboard.writeText(code); e.target.textContent = '복사됨'; }
+      catch { e.target.textContent = '길게 눌러 직접 복사'; }
+    };
+    history.replaceState(null, '', here);
+  } else if (q.get('error')) {
+    document.getElementById('errmsg').textContent =
+      (q.get('error_description') || q.get('error_reason') || q.get('error')).replace(/\+/g, ' ');
+    show('err');
+  } else {
+    show('start');
+    const input = document.getElementById('appid'), go = document.getElementById('go');
+    input.oninput = () => { go.disabled = !/^\d{5,}$/.test(input.value.trim()); };
+    go.onclick = () => {
+      const scopes = ['threads_basic', 'threads_content_publish', 'threads_manage_replies',
+                      'threads_read_replies', 'threads_manage_insights'].join(',');
+      const u = new URL('https://threads.com/oauth/authorize');
+      u.searchParams.set('client_id', input.value.trim());
+      u.searchParams.set('redirect_uri', here);
+      u.searchParams.set('scope', scopes);
+      u.searchParams.set('response_type', 'code');
+      location.href = u.toString();
+    };
+  }
+</script>
+</body>
+</html>

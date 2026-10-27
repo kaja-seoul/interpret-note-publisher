@@ -1,0 +1,23 @@
+# 연결 확인: Threads 계정 이름·게시 한도·팔로워, Notion 두 데이터베이스 읽기. 토큰 값은 찍지 않는다.
+name: verify
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -q -r requirements.txt
+      - env:
+          THREADS_TOKEN: ${{ secrets.THREADS_TOKEN }}
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+        run: python -m publisher.cli verify

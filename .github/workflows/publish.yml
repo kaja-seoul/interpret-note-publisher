@@ -1,0 +1,159 @@
+# 게시기: Notion 콘텐츠 캘린더의 '승인' 글을 Threads 공식 API로 올린다.
+# 07:47·21:17(KST)에 깨어나 준비 → 카드 공개 → 08:07·21:37 + 0~9분에 게시.
+# GitHub 예약 실행은 몇 분 늦게 깨는 일이 잦아 20분 일찍 깨운다.
+name: publish
+
+on:
+  schedule:
+    - cron: '47 22 * * *'   # KST 07:47 → 08:07 슬롯
+    - cron: '17 12 * * *'   # KST 21:17 → 21:37 슬롯
+  workflow_dispatch:
+    inputs:
+      slot:
+        description: '슬롯'
+        type: choice
+        options: ['08:07', '21:37']
+        default: '08:07'
+      page_id:
+        description: '시험용: 이 캘린더 행만 올림 (비우면 평소대로 고름)'
+        type: string
+        default: ''
+      dry_run:
+        description: '드라이런: 검사·카드·컨테이너까지만, 게시 안 함'
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      has_post: ${{ steps.p.outputs.has_post }}
+      key: ${{ steps.p.outputs.key }}
+      notices: ${{ steps.p.outputs.notices }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -q -r requirements.txt
+      - id: s
+        name: 슬롯 정하기
+        env:
+          EVENT: ${{ github.event_name }}
+          SCHED: ${{ github.event.schedule }}
+          IN_SLOT: ${{ inputs.slot }}
+        run: |
+          if [ "$EVENT" = "workflow_dispatch" ]; then slot="$IN_SLOT"
+          elif [ "$SCHED" = "47 22 * * *" ]; then slot="08:07"
+          else slot="21:37"; fi
+          echo "slot=$slot" >> "$GITHUB_OUTPUT"
+      - id: p
+        name: 올릴 글 고르기 · 형식 검사 · 카드 받기
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          SLOT: ${{ steps.s.outputs.slot }}
+          PAGE_ID: ${{ inputs.page_id }}
+        run: |
+          args=(--slot "$SLOT")
+          if [ -n "$PAGE_ID" ]; then args+=(--page-id "$PAGE_ID"); fi
+          python -m publisher.cli prepare "${args[@]}"
+      - name: 준비물 넘기기
+        if: steps.p.outputs.has_post == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: staged
+          path: staged/
+          retention-days: 3
+      - name: 알림 내용
+        if: always()
+        run: if [ -s notices.txt ]; then cat notices.txt; fi
+
+  pages:
+    needs: prepare
+    if: needs.prepare.outputs.has_post == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.d.outputs.page_url }}
+    outputs:
+      page_url: ${{ steps.d.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          name: staged
+          path: staged/
+      - run: pip install -q -r requirements.txt
+      - run: python -m publisher.cli build-site
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: d
+        uses: actions/deploy-pages@v4
+
+  post:
+    needs: [prepare, pages]
+    if: needs.prepare.outputs.has_post == 'true' && needs.pages.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -q -r requirements.txt
+      - uses: actions/download-artifact@v4
+        with:
+          name: staged
+          path: staged/
+      - id: post
+        name: 기다렸다가 게시 · 첫 답글 · Notion 기록
+        env:
+          THREADS_TOKEN: ${{ secrets.THREADS_TOKEN }}
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          KEY: ${{ needs.prepare.outputs.key }}
+          PAGES_URL: ${{ needs.pages.outputs.page_url }}
+          DRY: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+          MANUAL: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          args=(--key "$KEY" --pages-url "$PAGES_URL")
+          if [ "$DRY" = "true" ]; then args+=(--dry-run); fi
+          if [ "$MANUAL" = "true" ]; then args+=(--now); fi
+          python -m publisher.cli post "${args[@]}"
+      - name: 원장 커밋 (게시된 글과 카드만)
+        if: always()
+        run: |
+          if [ -z "$(git status --porcelain posts/)" ]; then echo "커밋할 것 없음"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add posts/
+          git commit -m "게시 기록: ${{ needs.prepare.outputs.key }}"
+          for i in 1 2 3; do git pull --rebase -q && git push -q && break; sleep 5; done
+      - name: 알림 확인
+        if: always()
+        run: |
+          if [ -s notices.txt ]; then cat notices.txt; echo "::error title=게시기 알림::Notion 그 글 행의 댓글을 확인하세요"; exit 1; fi
+
+  report:
+    needs: [prepare, pages, post]
+    if: always() && needs.prepare.outputs.notices == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "::error title=게시기 알림::준비 단계에서 알릴 일이 생겼다. Notion 그 글 행의 댓글을 확인하세요"
+          exit 1
