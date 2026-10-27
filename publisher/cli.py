@@ -487,6 +487,9 @@ def cmd_verify(a) -> int:
             me = th.me()
             th.user_id = me["id"]
             log(f"Threads: @{me.get('username')} (id {me.get('id')})")
+            if me.get("username") != C.ACCOUNT:
+                ok = False
+                log(f"계정이 @{C.ACCOUNT}가 아니다. 게시기는 이 토큰으로 올리지 않는다.")
             lim = th.publishing_limit()
             log(f"게시 한도: {json.dumps(lim.get('data', lim), ensure_ascii=False)}")
             fc = th.followers_count()

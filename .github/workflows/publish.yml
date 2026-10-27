@@ -34,15 +34,15 @@ concurrency:
 
 jobs:
   prepare:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     outputs:
       has_post: ${{ steps.p.outputs.has_post }}
       key: ${{ steps.p.outputs.key }}
       notices: ${{ steps.p.outputs.notices }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - run: pip install -q -r requirements.txt
@@ -69,7 +69,7 @@ jobs:
           python -m publisher.cli prepare "${args[@]}"
       - name: 준비물 넘기기
         if: steps.p.outputs.has_post == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: staged
           path: staged/
@@ -81,7 +81,7 @@ jobs:
   pages:
     needs: prepare
     if: needs.prepare.outputs.has_post == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     environment:
       name: github-pages
@@ -89,35 +89,35 @@ jobs:
     outputs:
       page_url: ${{ steps.d.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: staged
           path: staged/
       - run: pip install -q -r requirements.txt
       - run: python -m publisher.cli build-site
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: _site
       - id: d
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 
   post:
     needs: [prepare, pages]
     if: needs.prepare.outputs.has_post == 'true' && needs.pages.result == 'success'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 75
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - run: pip install -q -r requirements.txt
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: staged
           path: staged/
@@ -152,7 +152,7 @@ jobs:
   report:
     needs: [prepare, pages, post]
     if: always() && needs.prepare.outputs.notices == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - run: |
           echo "::error title=게시기 알림::준비 단계에서 알릴 일이 생겼다. Notion 그 글 행의 댓글을 확인하세요"
