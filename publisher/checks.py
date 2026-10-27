@@ -112,11 +112,11 @@ def check_body(text: str | None) -> CheckResult:
     links = find_links(body)
 
     if fl_len > FIRST_LINE_MAX:
-        problems.append(f"첫 줄이 {fl_len}자다 ({FIRST_LINE_MAX}자 이내): {fl}")
+        problems.append(f"첫 줄이 {fl_len}자다 ({FIRST_LINE_MAX}자 이내)")
     if len(lines) > BODY_LINES_MAX:
         problems.append(f"본문이 빈 줄 빼고 {len(lines)}줄이다 ({BODY_LINES_MAX}줄 이하)")
     if len(links) > BODY_LINKS_MAX:
-        problems.append("본문에 링크가 있다 (0개여야 함): " + ", ".join(links))
+        problems.append(f"본문에 링크가 {len(links)}개 있다 (0개여야 함. 맨 도메인도 링크로 셈)")
     if length > TEXT_MAX:
         problems.append(f"본문이 {length}자다 ({TEXT_MAX}자 이하, 이모지는 여러 자로 셈)")
 
