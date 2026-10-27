@@ -1,0 +1,39 @@
+# 24시간 지표: 매시 47분에 게시 뒤 24~30시간 된 글의 지표를 '게시 로그와 지표'에 채운다.
+# 08시 대(KST) 실행은 팔로워 수를 data/followers.csv에 하루 한 번 적고 커밋한다.
+name: metrics
+
+on:
+  schedule:
+    - cron: '47 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: metrics
+  cancel-in-progress: false
+
+jobs:
+  metrics:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - run: pip install -q -r requirements.txt
+      - id: m
+        env:
+          THREADS_TOKEN: ${{ secrets.THREADS_TOKEN }}
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+        run: python -m publisher.cli metrics
+      - name: 팔로워 하루 기록 커밋
+        if: steps.m.outputs.snapshot == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/followers.csv
+          git commit -m "팔로워 하루 기록 $(TZ=Asia/Seoul date +%F)"
+          for i in 1 2 3; do git pull --rebase -q && git push -q && break; sleep 5; done

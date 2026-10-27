@@ -489,6 +489,22 @@ def cmd_post(a) -> int:
     return 0
 
 
+# ---------- metrics ----------
+def cmd_metrics(a) -> int:
+    from . import metrics
+    res = metrics.run(notion(), threads(), now_kst(), log)
+    for line in res["filled"]:
+        _note(True, "24시간 지표 채움 · " + line)
+    for line in res["daily"]:
+        _note(True, "그날 팔로워 증감 · " + line)
+    for t in res["late"]:
+        _note(True, f"30시간이 지나 24시간 지표를 못 잼 · {t}")
+    if res["snapshot"] is not None:
+        _note(True, f"팔로워 하루 기록 · {res['snapshot']}")
+    gh_output(snapshot="true" if res["snapshot"] is not None else "false")
+    return 0
+
+
 # ---------- selftest ----------
 def cmd_selftest(a) -> int:
     """Threads가 GitHub Pages 이미지를 가져가는지 본다. 캐러셀 컨테이너까지만 만들고 게시하지 않는다."""
@@ -584,11 +600,12 @@ def main(argv=None) -> int:
     p.add_argument("--now", action="store_true")
     sub.add_parser("build-site")
     sub.add_parser("verify")
+    sub.add_parser("metrics")
     p = sub.add_parser("selftest")
     p.add_argument("--pages-url", required=True)
     a = ap.parse_args(argv)
     fn = {"prepare": cmd_prepare, "post": cmd_post, "build-site": cmd_build_site, "verify": cmd_verify,
-          "selftest": cmd_selftest}[a.cmd]
+          "selftest": cmd_selftest, "metrics": cmd_metrics}[a.cmd]
     rc = fn(a)
     if a.cmd in ("prepare", "post"):
         gh_output(notices="true" if NOTICES.exists() and NOTICES.read_text(encoding="utf-8").strip() else "false")

@@ -159,27 +159,52 @@ class Threads:
         body = self._req("GET", media_id, {"fields": "permalink,shortcode"})
         return body.get("permalink", "")
 
+    # ---- 여러 쪽 읽기 ----
+    def _paged(self, path: str, params: dict, max_pages: int = 10) -> list[dict]:
+        out, after = [], None
+        for _ in range(max_pages):
+            p = dict(params)
+            if after:
+                p["after"] = after
+            body = self._req("GET", path, p)
+            out += body.get("data", [])
+            after = ((body.get("paging") or {}).get("cursors") or {}).get("after")
+            if not after or not (body.get("paging") or {}).get("next"):
+                break
+        return out
+
+    def my_posts(self, max_pages: int = 4) -> list[dict]:
+        return self._paged(f"{self.user_id}/threads", {"fields": "id,permalink,timestamp,text", "limit": 50}, max_pages)
+
     # ---- 답글·지표 ----
     def replies(self, media_id: str) -> list[dict]:
-        body = self._req(
-            "GET",
+        return self._paged(
             f"{media_id}/conversation",
-            {"fields": "id,text,username,timestamp,is_reply_owned_by_me", "reverse": "false"},
+            {"fields": "id,text,username,timestamp,is_reply_owned_by_me", "reverse": "false", "limit": 100},
         )
-        return body.get("data", [])
 
     def media_insights(self, media_id: str) -> dict:
-        body = self._req(
-            "GET",
-            f"{media_id}/insights",
-            {"metric": "views,likes,replies,reposts,quotes,shares"},
-        )
-        out = {}
-        for item in body.get("data", []):
-            vals = item.get("values") or []
-            tv = item.get("total_value") or {}
-            if vals:
-                out[item["name"]] = vals[0].get("value")
-            elif "value" in tv:
-                out[item["name"]] = tv["value"]
-        return out
+        """views·shares는 문서에 '개발 중'으로 적혀 있어, 한꺼번에 실패하면 하나씩 다시 묻는다."""
+        metrics = ["views", "likes", "replies", "reposts", "quotes", "shares"]
+
+        def parse(body: dict) -> dict:
+            out = {}
+            for item in body.get("data", []):
+                vals = item.get("values") or []
+                tv = item.get("total_value") or {}
+                if vals:
+                    out[item["name"]] = vals[0].get("value")
+                elif "value" in tv:
+                    out[item["name"]] = tv["value"]
+            return out
+
+        try:
+            return parse(self._req("GET", f"{media_id}/insights", {"metric": ",".join(metrics)}))
+        except ThreadsError:
+            out = {}
+            for m in metrics:
+                try:
+                    out.update(parse(self._req("GET", f"{media_id}/insights", {"metric": m}, retries=1)))
+                except ThreadsError:
+                    pass
+            return out
