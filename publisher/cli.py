@@ -479,37 +479,60 @@ def cmd_post(a) -> int:
 
 
 # ---------- verify ----------
+CAL_PROPS = [C.P_TITLE, C.P_STATUS, C.P_SLOT, C.P_DATE, C.P_BODY, C.P_REPLY, C.P_CARDS, C.P_LINK,
+             C.P_SERIES, C.P_NUMBER, C.P_VAR, C.P_MEMO, C.P_SOURCE]
+LOG_PROPS = ["글", "게시 시각", "게시 링크", "연재", "콘텐츠", "변수", "첫 줄 글자 수", "메모", "팔로워 게시 전",
+             "조회 24h", "좋아요 24h", "외부 댓글 24h", "리포스트 24h", "공유 24h", "팔로워 24h 뒤", "그날 팔로워 증감"]
+
+
+def _note(ok: bool, msg: str) -> None:
+    """결과를 로그 + 실행 요약 + 주석(annotation)으로 남긴다. 비밀값은 넣지 않는다."""
+    level = "notice" if ok else "error"
+    print(f"::{level} title=verify::{msg}", flush=True)
+    summary(f"- {'✅' if ok else '❌'} {msg}")
+
+
 def cmd_verify(a) -> int:
     ok = True
+    for name in ("THREADS_TOKEN", "NOTION_TOKEN", "GH_PAT", "THREADS_APP_ID", "THREADS_APP_SECRET"):
+        has = bool(os.environ.get(name))
+        if name in ("THREADS_TOKEN", "NOTION_TOKEN") and not has:
+            ok = False
+        _note(has, f"Secret {name}: {'있음' if has else '없음'}")
+
     if os.environ.get("THREADS_TOKEN"):
         try:
             th = threads()
             me = th.me()
             th.user_id = me["id"]
-            log(f"Threads: @{me.get('username')} (id {me.get('id')})")
-            if me.get("username") != C.ACCOUNT:
-                ok = False
-                log(f"계정이 @{C.ACCOUNT}가 아니다. 게시기는 이 토큰으로 올리지 않는다.")
-            lim = th.publishing_limit()
-            log(f"게시 한도: {json.dumps(lim.get('data', lim), ensure_ascii=False)}")
+            good = me.get("username") == C.ACCOUNT
+            ok &= good
+            _note(good, f"Threads 계정 @{me.get('username')}" + ("" if good else f" (게시기는 @{C.ACCOUNT}에만 올린다)"))
+            lim = (th.publishing_limit().get("data") or [{}])[0]
+            used = lim.get("quota_usage")
+            total = (lim.get("config") or {}).get("quota_total")
+            _note(True, f"Threads 게시 한도: 24시간 {used}/{total}")
             fc = th.followers_count()
-            log(f"팔로워: {fc if fc is not None else '읽기 실패(threads_manage_insights 권한 확인)'}")
+            _note(fc is not None, f"Threads 팔로워: {fc}" if fc is not None else "Threads 팔로워 읽기 실패 (threads_manage_insights 권한 확인)")
         except Exception as e:
             ok = False
-            log(f"Threads 확인 실패: {e}")
-    else:
-        log("THREADS_TOKEN 없음 (아직 안 넣었으면 정상)")
+            _note(False, f"Threads 확인 실패: {e}")
+
     if os.environ.get("NOTION_TOKEN"):
-        try:
-            nt = notion()
-            for name, ds in (("콘텐츠 캘린더", C.CALENDAR_DS), ("게시 로그와 지표", C.POSTLOG_DS)):
+        nt = notion()
+        for name, ds, need in (("콘텐츠 캘린더", C.CALENDAR_DS, CAL_PROPS), ("게시 로그와 지표", C.POSTLOG_DS, LOG_PROPS)):
+            try:
+                info = nt._req("GET", f"data_sources/{ds}")
+                have = set((info.get("properties") or {}).keys())
+                missing = [p for p in need if p not in have]
                 rows = nt.query(ds)
-                log(f"Notion {name}: 행 {len(rows)}개 읽음")
-        except Exception as e:
-            ok = False
-            log(f"Notion 확인 실패: {e}")
-    else:
-        log("NOTION_TOKEN 없음 (아직 안 넣었으면 정상)")
+                good = not missing
+                ok &= good
+                _note(good, f"Notion {name}: 행 {len(rows)}개" + (f", 없는 칸: {', '.join(missing)}" if missing else ", 필요한 칸 모두 있음"))
+            except Exception as e:
+                ok = False
+                hint = " ('스레드 운영' 페이지에 연결 접근 권한을 줬는지 확인)" if "404" in str(e) or "object_not_found" in str(e) else ""
+                _note(False, f"Notion {name} 읽기 실패{hint}: {str(e)[:200]}")
     return 0 if ok else 1
 
 
