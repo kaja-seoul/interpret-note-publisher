@@ -9,7 +9,7 @@ KST = ZoneInfo("Asia/Seoul")
 # 예약 게시 스위치. False면 07:47·21:17 예약 실행은 아무것도 올리지 않는다.
 # 손으로 돌리는 시험(page_id 지정)과 드라이런은 이 값과 상관없이 된다.
 # 운영자가 '게시기로 넘긴다'고 정한 뒤에만 True로 바꾼다 (런이 카드를 Notion에 붙이고, 손 게시를 멈춘 뒤).
-LIVE = False
+LIVE = True  # 10/27 밤 본부 결정: 10/28 08:07 슬롯부터 켬
 
 # Notion '스레드 운영' 데이터 소스 (collection:// ID)
 CALENDAR_DS = os.environ.get("NOTION_CALENDAR_DS", "90d2816a-a68b-4a74-82e5-bff83f099149")
