@@ -402,6 +402,13 @@ def cmd_post(a) -> int:
         cid = th.create_post_container(meta["text"], urls)
         th.wait_ready(cid)
         if dry:
+            kind = "TEXT" if not urls else ("IMAGE" if len(urls) == 1 else "CAROUSEL")
+            try:
+                api_kind = th._req("GET", cid, {"fields": "status,media_type"}).get("media_type")
+            except Exception:
+                api_kind = None
+            _note(True, f"드라이런 통과: 카드 {len(urls)}장 → {kind} 컨테이너 FINISHED"
+                        + (f" (API media_type {api_kind})" if api_kind else "") + ". 게시 안 함")
             log(f"[드라이런] 컨테이너 준비 완료({cid}). 게시하지 않는다. 컨테이너는 24시간 뒤 사라진다.")
             if meta["reply"]:
                 log("[드라이런] 첫 답글은 본글이 있어야 만들 수 있어 건너뛴다.")
