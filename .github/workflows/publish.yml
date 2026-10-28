@@ -1,6 +1,7 @@
 # 게시기: Notion 콘텐츠 캘린더의 '승인' 글을 Threads 공식 API로 올린다.
-# 07:47·21:17(KST)에 깨어나 준비 → 카드 공개 → 08:07·21:37 + 0~9분에 게시.
-# GitHub 예약 실행은 몇 분 늦게 깨는 일이 잦아 20분 일찍 깨운다.
+# 08:07·21:37 + 0~9분에 게시한다. GitHub 예약 실행은 늦거나 빠지기도 해서(10/28 아침 07:47 실행이 안 옴)
+# 슬롯마다 20분 간격으로 5번 깨운다. 슬롯은 깬 시각으로 정한다(슬롯 55분 전 ~ 90분 뒤, 밖이면 그냥 끝).
+# 이미 올린 글은 캘린더 '게시됨'·게시 링크와 계정 최근 글 대조로 다시 올리지 않는다.
 # 예약 실행은 publisher/config.py의 LIVE가 True일 때만 올린다.
 # dryrun/request.txt에 캘린더 행 ID를 적어 main에 올리면 그 행으로 드라이런만 돈다(게시 안 함).
 # 끝나면 Pages를 저장소 상태(게시된 카드만)로 다시 공개해, 게시 안 된 카드는 내려간다.
@@ -8,8 +9,11 @@ name: publish
 
 on:
   schedule:
-    - cron: '47 22 * * *'   # KST 07:47 → 08:07 슬롯
-    - cron: '17 12 * * *'   # KST 21:17 → 21:37 슬롯
+    - cron: '13,33,53 22 * * *'   # KST 07:13 07:33 07:53 → 08:07 슬롯
+    - cron: '13,33 23 * * *'      # KST 08:13 08:33 (늦은 실행 대비)
+    - cron: '43 11 * * *'         # KST 20:43 → 21:37 슬롯
+    - cron: '3,23,43 12 * * *'    # KST 21:03 21:23 21:43
+    - cron: '3 13 * * *'          # KST 22:03 (늦은 실행 대비)
   push:
     branches: [main]
     paths: ['dryrun/request.txt']
@@ -68,8 +72,7 @@ jobs:
             slot="$IN_SLOT"; page="$IN_PAGE"; dry="$IN_DRY"; manual=true
           elif [ "$EVENT" = "push" ]; then
             slot="08:07"; page="$(tr -d ' \r\n' < dryrun/request.txt)"; dry=true; manual=true
-          elif [ "$SCHED" = "47 22 * * *" ]; then slot="08:07"
-          else slot="21:37"; fi
+          else slot="auto"; fi
           { echo "slot=$slot"; echo "page=$page"; echo "dry=$dry"; echo "manual=$manual"; } >> "$GITHUB_OUTPUT"
           echo "슬롯 $slot · 대상 ${page:-자동} · 드라이런 $dry"
       - id: p

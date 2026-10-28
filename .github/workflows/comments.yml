@@ -1,0 +1,34 @@
+# 댓글 수집: 내 최근 글 3개의 답글을 Notion '댓글함'에 넣는다. 댓글 런(09:40·23:10) 전에 끝나게
+# 09:05·09:15·09:25, 22:35·22:45·22:55(KST)에 깨운다. GitHub 예약이 빠질 때를 대비한 것이고, 같은 답글은 한 번만 넣는다.
+name: comments
+
+on:
+  schedule:
+    - cron: '5,15,25 0 * * *'     # KST 09:05 09:15 09:25
+    - cron: '35,45,55 13 * * *'   # KST 22:35 22:45 22:55
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['publisher/comments.py', '.github/workflows/comments.yml']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: comments
+  cancel-in-progress: false
+
+jobs:
+  comments:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - run: pip install -q -r requirements.txt
+      - env:
+          THREADS_TOKEN: ${{ secrets.THREADS_TOKEN }}
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+        run: python -m publisher.cli comments

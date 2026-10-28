@@ -178,10 +178,25 @@ class Threads:
 
     # ---- 답글·지표 ----
     def replies(self, media_id: str) -> list[dict]:
-        return self._paged(
-            f"{media_id}/conversation",
-            {"fields": "id,text,username,timestamp,is_reply_owned_by_me", "reverse": "false", "limit": 100},
+        base = "id,text,username,timestamp,is_reply_owned_by_me"
+        try:
+            return self._paged(
+                f"{media_id}/conversation",
+                {"fields": base + ",permalink,replied_to", "reverse": "false", "limit": 100},
+            )
+        except ThreadsError:
+            return self._paged(f"{media_id}/conversation", {"fields": base, "reverse": "false", "limit": 100})
+
+    def keyword_search(self, q: str, limit: int = 5) -> list[dict]:
+        """threads_keyword_search 권한 필요. 앱 심사 전에는 내 글 안에서만 찾는다(문서)."""
+        body = self._req(
+            "GET",
+            "keyword_search",
+            {"q": q, "search_type": "RECENT", "limit": limit,
+             "fields": "id,text,permalink,timestamp,username,has_replies"},
+            retries=1,
         )
+        return body.get("data", [])
 
     def media_insights(self, media_id: str) -> dict:
         """views·shares는 문서에 '개발 중'으로 적혀 있어, 한꺼번에 실패하면 하나씩 다시 묻는다."""

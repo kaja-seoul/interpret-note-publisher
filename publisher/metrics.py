@@ -22,7 +22,7 @@ from .notion import Notion, date_start, number_of, rt, text_of, url_of
 FOLLOWERS_CSV = Path(__file__).resolve().parent.parent / "data" / "followers.csv"
 WINDOW_MIN_H = 24
 WINDOW_MAX_H = 30
-SNAPSHOT_HOUR = 8  # KST 08시 대 실행이 하루 기록을 남긴다
+SNAPSHOT_HOURS = range(8, 11)  # KST 08~10시 첫 실행이 하루 기록을 남긴다(예약이 빠질 때 대비)
 
 
 def _when(page: dict) -> datetime | None:
@@ -81,7 +81,7 @@ def run(nt: Notion, th, now: datetime, log=print) -> dict:
     result = {"filled": [], "late": [], "daily": [], "snapshot": None}
 
     # 1) 하루 기록 (08시 대 실행만)
-    if followers is not None and now.hour == SNAPSHOT_HOUR:
+    if followers is not None and now.hour in SNAPSHOT_HOURS:
         if save_snapshot(now.date(), now, followers):
             result["snapshot"] = followers
             log(f"팔로워 하루 기록: {now.date()} {followers}")

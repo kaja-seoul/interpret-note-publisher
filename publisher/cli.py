@@ -138,6 +138,17 @@ def posted_today(day) -> int:
 
 
 # ---------- prepare ----------
+def current_slot(now: datetime) -> str | None:
+    """깬 시각으로 맡을 슬롯을 정한다. [슬롯-EARLY_MIN, 슬롯+LATE_LIMIT_MIN] 밖이면 None."""
+    for slot in C.SLOT_ORDER:
+        h, m = C.SLOTS[slot]
+        sdt = now.replace(hour=h, minute=m, second=0, microsecond=0)
+        if sdt - timedelta(minutes=C.EARLY_MIN) <= now <= sdt + timedelta(minutes=C.LATE_LIMIT_MIN):
+            return slot
+    return None
+
+
+
 def pick(nt: Notion, slot: str, now: datetime, page_id: str | None, dry_run: bool = False) -> tuple[dict | None, datetime | None]:
     if page_id:
         page = nt.page(page_id)
@@ -201,6 +212,13 @@ def cmd_prepare(a) -> int:
     nt = notion()
     now = now_kst()
     slot = a.slot
+    if slot == "auto":
+        slot = current_slot(now)
+        if not slot:
+            log(f"{now:%m/%d %H:%M}는 게시 창 밖이다 (슬롯 55분 전 ~ 90분 뒤). 아무것도 하지 않는다.")
+            gh_output(has_post="false")
+            summary(f"### {now:%m/%d %H:%M}: 게시 창 밖 (예약 실행이 늦거나 일찍 옴)")
+            return 0
     if not a.page_id and not C.LIVE:
         log("예약 게시가 꺼져 있다 (config.LIVE = False). 아무것도 올리지 않는다.")
         gh_output(has_post="false")
@@ -375,7 +393,7 @@ def cmd_post(a) -> int:
         summary(f"### 올리지 않음: 준비 뒤 상태가 '{select_of(page, C.P_STATUS)}'로 바뀜")
         return 0
     if snapshot(page) != meta["snapshot"]:
-        notice(nt, pid, "준비한 뒤 본문·첫 답글·카드가 바뀌어 이번엔 올리지 않았다. 다음 슬롯에 다시 검사해 올린다.")
+        notice(nt, pid, "준비한 뒤 본문·첫 답글·카드가 바뀌어 이번엔 올리지 않았다. 다음 실행(20분 간격, 슬롯 뒤 90분까지)에서 다시 검사해 올린다.")
         return 0
 
     base = a.pages_url.rstrip("/") + f"/c/{meta['key']}/"
@@ -496,6 +514,14 @@ def cmd_post(a) -> int:
     return 0
 
 
+# ---------- comments ----------
+def cmd_comments(a) -> int:
+    from . import comments
+    res = comments.run(notion(), threads(), now_kst(), log)
+    _note(True, f"댓글 수집: 최근 글 {res['posts']}개 · 외부 답글 {res['total_external']}개 · 새로 넣음 {res['new']} · 고침 {res['updated']}")
+    return 0
+
+
 # ---------- metrics ----------
 def cmd_metrics(a) -> int:
     from . import metrics
@@ -537,6 +563,7 @@ def cmd_selftest(a) -> int:
 # ---------- verify ----------
 CAL_PROPS = [C.P_TITLE, C.P_STATUS, C.P_SLOT, C.P_DATE, C.P_BODY, C.P_REPLY, C.P_CARDS, C.P_LINK,
              C.P_SERIES, C.P_NUMBER, C.P_VAR, C.P_MEMO, C.P_SOURCE]
+COMMENT_PROPS = ["내용", "종류", "상태", "내가 답함", "작성자", "시각", "글 링크", "답글 링크", "대댓", "답글 ID", "글 ID", "수집 시각"]
 LOG_PROPS = ["글", "게시 시각", "게시 링크", "연재", "콘텐츠", "변수", "첫 줄 글자 수", "메모", "팔로워 게시 전",
              "조회 24h", "좋아요 24h", "외부 댓글 24h", "리포스트 24h", "공유 24h", "팔로워 24h 뒤", "그날 팔로워 증감"]
 
@@ -577,6 +604,15 @@ def cmd_verify(a) -> int:
                 reps = th.replies(p0["id"])
                 ext = sum(1 for r in reps if not r.get("is_reply_owned_by_me"))
                 good = bool(ins)
+                try:
+                    hits = th.keyword_search("AI", 5)
+                    own = sum(1 for h in hits if h.get("username") == C.ACCOUNT)
+                    _note(True, f"키워드 검색: 됨 · 'AI' 최근 {len(hits)}건 중 내 글 {own}건"
+                                + (" (내 글만 나옴 → 앱 심사 전 제한)" if hits and own == len(hits) else ""))
+                except Exception as e:
+                    msg = str(e)
+                    _note(True, "키워드 검색: 권한 없음 (threads_keyword_search 미승인) · "
+                                + ("permission" if "ermission" in msg else msg[:120]))
                 _note(good, f"최근 글 지표 읽기 ({(p0.get('permalink') or '').rsplit('/', 1)[-1]}): "
                             + (", ".join(f"{k} {v}" for k, v in ins.items()) if ins else "실패")
                             + f" · 답글 {len(reps)}(외부 {ext})")
@@ -586,7 +622,9 @@ def cmd_verify(a) -> int:
 
     if os.environ.get("NOTION_TOKEN"):
         nt = notion()
-        for name, ds, need in (("콘텐츠 캘린더", C.CALENDAR_DS, CAL_PROPS), ("게시 로그와 지표", C.POSTLOG_DS, LOG_PROPS)):
+        from .comments import COMMENTS_DS
+        for name, ds, need in (("콘텐츠 캘린더", C.CALENDAR_DS, CAL_PROPS), ("게시 로그와 지표", C.POSTLOG_DS, LOG_PROPS),
+                               ("댓글함", COMMENTS_DS, COMMENT_PROPS)):
             try:
                 info = nt._req("GET", f"data_sources/{ds}")
                 have = set((info.get("properties") or {}).keys())
@@ -606,7 +644,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="publisher")
     sub = ap.add_subparsers(dest="cmd", required=True)
     p = sub.add_parser("prepare")
-    p.add_argument("--slot", required=True, choices=list(C.SLOTS))
+    p.add_argument("--slot", required=True, choices=list(C.SLOTS) + ["auto"])
     p.add_argument("--page-id", default="")
     p.add_argument("--now", action="store_true")
     p.add_argument("--dry-run", action="store_true")
@@ -618,11 +656,12 @@ def main(argv=None) -> int:
     sub.add_parser("build-site")
     sub.add_parser("verify")
     sub.add_parser("metrics")
+    sub.add_parser("comments")
     p = sub.add_parser("selftest")
     p.add_argument("--pages-url", required=True)
     a = ap.parse_args(argv)
     fn = {"prepare": cmd_prepare, "post": cmd_post, "build-site": cmd_build_site, "verify": cmd_verify,
-          "selftest": cmd_selftest, "metrics": cmd_metrics}[a.cmd]
+          "selftest": cmd_selftest, "metrics": cmd_metrics, "comments": cmd_comments}[a.cmd]
     rc = fn(a)
     if a.cmd in ("prepare", "post"):
         gh_output(notices="true" if NOTICES.exists() and NOTICES.read_text(encoding="utf-8").strip() else "false")
