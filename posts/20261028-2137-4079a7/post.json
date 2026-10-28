@@ -1,0 +1,23 @@
+{
+  "key": "20261028-2137-4079a7",
+  "title": "먼저 써봄 #002 · 맥 AI fm, 처음 막히면 이 3단계",
+  "series": "먼저 써봄",
+  "number": 2,
+  "variable": "A",
+  "slot": "21:37",
+  "first_line_len": 20,
+  "text": "맥 터미널에 fm 쳤더니 경고부터 뜸\nmacOS 27 맥 무료 AI, 처음 한 번은 이 3단계면 풀림\n\nfm 원문: \"YOU HAVE NOT AGREED TO THE FOUNDATION MODELS CLI LEGAL NOTICE & TERMS.\"\n통역: 약관에 아직 동의 안 해서 답을 안 해 줌\n\n- 순서: sudo fm license → 맥 비밀번호 → y (동의)\n- 비밀번호는 쳐도 화면에 안 보임. 정상임\n- 그다음 fm respond \"할 말\" → 한국어로 3초 안에 답함\n\n필요할 때 보게 저장",
+  "reply": "먼저 써봄 #002 · 출처 ↓\n\n내 맥에서 직접 실행 (macOS 27, 10/28). 카드는 실행 화면 재구성\nfm 소개: Apple, WWDC26 세션 334\nhttps://developer.apple.com/videos/play/wwdc2026/334/",
+  "cards": [
+    {
+      "file": "card1.png",
+      "name": "실밸통역사_먼저써봄002_1of1.png"
+    }
+  ],
+  "source_url": "https://developer.apple.com/videos/play/wwdc2026/334/",
+  "media_id": "18119532094780176",
+  "reply_id": "18143594848623096",
+  "permalink": "https://www.threads.com/@interpret.note/post/DfCq2YiEVCK",
+  "posted_at": "2026-10-28T23:41:01.718894+09:00",
+  "followers_before": 27
+}
