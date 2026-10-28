@@ -4,6 +4,9 @@
 # 이미 올린 글은 캘린더 '게시됨'·게시 링크와 계정 최근 글 대조로 다시 올리지 않는다.
 # 예약 실행은 publisher/config.py의 LIVE가 True일 때만 올린다.
 # dryrun/request.txt에 캘린더 행 ID를 적어 main에 올리면 그 행으로 드라이런만 돈다(게시 안 함).
+# kick/slot.txt를 바꿔 main에 올리면 깨어난다(10/28: GitHub 예약 실행이 거의 오지 않아 만든 길).
+#   'live auto …' → 예약 실행과 똑같이 슬롯을 시각으로 정해 실제 게시. Claude 예약 작업 '스레드 게시기 깨우기'가 쓴다.
+#   'dry 08:07 …' / 'dry 21:37 …' / 'dry auto …' → 같은 길로 드라이런만(게시 안 함). 시험용.
 # 끝나면 Pages를 저장소 상태(게시된 카드만)로 다시 공개해, 게시 안 된 카드는 내려간다.
 name: publish
 
@@ -16,7 +19,7 @@ on:
     - cron: '3 13 * * *'          # KST 22:03 (늦은 실행 대비)
   push:
     branches: [main]
-    paths: ['dryrun/request.txt']
+    paths: ['dryrun/request.txt', 'kick/slot.txt']
   workflow_dispatch:
     inputs:
       slot:
@@ -71,7 +74,18 @@ jobs:
           if [ "$EVENT" = "workflow_dispatch" ]; then
             slot="$IN_SLOT"; page="$IN_PAGE"; dry="$IN_DRY"; manual=true
           elif [ "$EVENT" = "push" ]; then
-            slot="08:07"; page="$(tr -d ' \r\n' < dryrun/request.txt)"; dry=true; manual=true
+            touched="$(python3 -c "import json,os; e=json.load(open(os.environ['GITHUB_EVENT_PATH'])); print(' '.join(f for c in e.get('commits',[]) for f in c.get('added',[])+c.get('modified',[])))")"
+            if [[ " $touched " == *" kick/slot.txt "* ]]; then
+              read -r kmode kslot _ < kick/slot.txt || true
+              if [ "$kmode" = "dry" ]; then
+                slot="${kslot:-auto}"; dry=true; manual=true
+              else
+                slot="auto"; dry=false; manual=false   # 실제 게시는 늘 시각으로 슬롯을 정한다
+              fi
+              echo "깨우기: $(head -c 200 kick/slot.txt)"
+            else
+              slot="08:07"; page="$(tr -d ' \r\n' < dryrun/request.txt)"; dry=true; manual=true
+            fi
           else slot="auto"; fi
           { echo "slot=$slot"; echo "page=$page"; echo "dry=$dry"; echo "manual=$manual"; } >> "$GITHUB_OUTPUT"
           echo "슬롯 $slot · 대상 ${page:-자동} · 드라이런 $dry"

@@ -165,6 +165,35 @@ class FlowTests(unittest.TestCase):
         self.assertEqual(led["media_id"], "m1")
         self.assertFalse((self.tmp / "notices.txt").exists())
 
+    def test_second_wake_in_same_slot_does_not_repost(self):
+        """깨우기가 여러 번 와도 한 슬롯에 한 번만 올라간다."""
+        def apply(pid, props):
+            self.nt.updates.append(props)
+            if "상태" in props:
+                self.nt.row["properties"]["상태"]["status"]["name"] = props["상태"]["status"]["name"]
+            if "게시 링크" in props:
+                self.nt.row["properties"]["게시 링크"]["url"] = props["게시 링크"]["url"]
+        self.nt.update = apply
+        key = self.prepare()
+        self.run_cli("build-site")
+        self.assertEqual(self.run_cli("post", "--key", key, "--pages-url", "https://o.github.io/r/"), 0)
+        self.assertEqual(len(self.th.published), 1)
+        # 두 번째 깨우기: 같은 슬롯, 같은 시각대
+        import shutil as _sh
+        _sh.rmtree(self.tmp / "staged")
+        self.assertEqual(self.run_cli("prepare", "--slot", "auto"), 0)
+        self.assertFalse((self.tmp / "staged").exists() and any((self.tmp / "staged").iterdir()))
+        self.assertEqual(len(self.th.published), 1)
+
+    def test_second_wake_when_notion_update_failed(self):
+        """게시 뒤 Notion 갱신이 실패해 '승인'이 남아도, 계정 최근 글과 대조해 다시 올리지 않는다."""
+        key = self.prepare()
+        self.run_cli("post", "--key", key, "--pages-url", "https://o.github.io/r/")
+        self.assertEqual(len(self.th.published), 1)
+        key2 = self.prepare()
+        self.run_cli("post", "--key", key2, "--pages-url", "https://o.github.io/r/")
+        self.assertEqual(len(self.th.published), 1)
+
     def test_dry_run_does_not_publish(self):
         key = self.prepare()
         self.assertEqual(self.run_cli("post", "--key", key, "--pages-url", "https://o.github.io/r/", "--dry-run"), 0)

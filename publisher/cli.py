@@ -216,6 +216,7 @@ def cmd_prepare(a) -> int:
         slot = current_slot(now)
         if not slot:
             log(f"{now:%m/%d %H:%M}는 게시 창 밖이다 (슬롯 55분 전 ~ 90분 뒤). 아무것도 하지 않는다.")
+            _note(True, f"{now:%m/%d %H:%M} 게시 창 밖: 할 일 없음")
             gh_output(has_post="false")
             summary(f"### {now:%m/%d %H:%M}: 게시 창 밖 (예약 실행이 늦거나 일찍 옴)")
             return 0
@@ -227,6 +228,7 @@ def cmd_prepare(a) -> int:
     page, slot_dt = pick(nt, slot, now, a.page_id, a.dry_run)
     if not page:
         log("올릴 글 없음.")
+        _note(True, f"{now:%m/%d %H:%M} · {slot} 슬롯: 올릴 '승인' 글 없음" + (" (드라이런)" if a.dry_run else ""))
         gh_output(has_post="false")
         summary(f"### {now:%m/%d} {slot}: 올릴 승인 글 없음")
         return 0
@@ -309,6 +311,7 @@ def cmd_prepare(a) -> int:
     (out / "post.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
     gh_output(has_post="true", key=key, card_count=str(len(saved)))
     summary(f"### 준비됨: {title}\n- {res.summary()}\n- 카드 {len(saved)}장\n- 목표 시각 {target:%H:%M:%S}")
+    _note(True, f"준비됨: {title} · 카드 {len(saved)}장 · 목표 {target:%H:%M}" + (" (드라이런)" if a.dry_run else ""))
     return 0
 
 
@@ -511,6 +514,7 @@ def cmd_post(a) -> int:
                 "followers_before": followers_before})
     (led / "post.json").write_text(json.dumps(rec, ensure_ascii=False, indent=2), encoding="utf-8")
     summary(f"### 게시됨: {meta['title']}\n- {permalink}\n- 첫 답글: {'있음' if reply_id else '없음'}")
+    _note(True, f"게시됨: {meta['title']} · {permalink or media_id} · 첫 답글 {'있음' if reply_id else '없음'}")
     return 0
 
 
