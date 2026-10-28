@@ -577,11 +577,12 @@ def _note(ok: bool, msg: str) -> None:
 
 def cmd_verify(a) -> int:
     ok = True
-    for name in ("THREADS_TOKEN", "NOTION_TOKEN", "GH_PAT", "THREADS_APP_ID", "THREADS_APP_SECRET"):
-        has = bool(os.environ.get(name))
-        if name in ("THREADS_TOKEN", "NOTION_TOKEN") and not has:
-            ok = False
-        _note(has, f"Secret {name}: {'있음' if has else '없음'}")
+    names = ("THREADS_TOKEN", "NOTION_TOKEN", "GH_PAT", "THREADS_APP_ID", "THREADS_APP_SECRET")
+    missing = [n for n in names if not os.environ.get(n)]
+    if any(n in missing for n in ("THREADS_TOKEN", "NOTION_TOKEN")):
+        ok = False
+    # GitHub 주석은 단계마다 notice 10개까지라 한 줄로 묶는다
+    _note(not missing, "Secrets: 모두 있음" if not missing else "Secrets 없음: " + ", ".join(missing))
 
     if os.environ.get("THREADS_TOKEN"):
         try:
