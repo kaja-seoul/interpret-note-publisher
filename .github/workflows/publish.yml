@@ -57,6 +57,8 @@ jobs:
       manual: ${{ steps.s.outputs.manual }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
       - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
@@ -74,7 +76,8 @@ jobs:
           if [ "$EVENT" = "workflow_dispatch" ]; then
             slot="$IN_SLOT"; page="$IN_PAGE"; dry="$IN_DRY"; manual=true
           elif [ "$EVENT" = "push" ]; then
-            touched="$(python3 -c "import json,os; e=json.load(open(os.environ['GITHUB_EVENT_PATH'])); print(' '.join(f for c in e.get('commits',[]) for f in c.get('added',[])+c.get('modified',[])))")"
+            # 이번 push에서 바뀐 파일: 마지막 커밋 diff + (있으면) push 정보의 파일 목록
+            touched="$(git diff --name-only HEAD~1 HEAD 2>/dev/null | tr '\n' ' ') $(python3 -c "import json,os; e=json.load(open(os.environ['GITHUB_EVENT_PATH'])); print(' '.join(f for c in e.get('commits',[]) for f in c.get('added',[])+c.get('modified',[])))" 2>/dev/null)"
             if [[ " $touched " == *" kick/slot.txt "* ]]; then
               read -r kmode kslot _ < kick/slot.txt || true
               if [ "$kmode" = "dry" ]; then
@@ -88,6 +91,7 @@ jobs:
             fi
           else slot="auto"; fi
           { echo "slot=$slot"; echo "page=$page"; echo "dry=$dry"; echo "manual=$manual"; } >> "$GITHUB_OUTPUT"
+          echo "::notice title=실행 방식::$EVENT · 슬롯 $slot · 드라이런 $dry$([ -n "$page" ] && echo ' · 지정 행 있음')"
           echo "슬롯 $slot · 대상 ${page:-자동} · 드라이런 $dry"
       - id: p
         name: 올릴 글 고르기 · 형식 검사 · 카드 받기
