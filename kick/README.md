@@ -15,15 +15,17 @@
 - 여러 번 깨워도 한 슬롯에 한 번만 올라간다: 실행은 차례로 돌고(concurrency 'publish'), 이미 올린 슬롯은 원장(posts/)을 보고 바로 끝내며, '게시됨'·게시 링크가 있는 행은 고르지 않는다.
 - `check.yml`(tick의 check, 예비 cron 09:50·23:25)은 슬롯이 지났는데 아직 '승인'인 글이 있으면 알리고(빨간불 → GitHub 메일 + 그 행 '[게시기]' 댓글), 아직 창 안이면 게시기를 한 번 더 깨운다. Threads API가 죽어 있어도(예: `API access blocked`) 여기서 빨간불이 난다. metrics·comments는 API 오류를 경고로만 남긴다(메일 폭탄 방지).
 
-## 외부 cron 설정 (운영자, 한 번)
+## 외부 cron 설정 (운영자, 한 번. 이 파일들이 main에 합쳐진 뒤)
 
-1. GitHub → Settings → Developer settings → Personal access tokens → **Fine-grained tokens** → Generate. Repository access: 이 저장소만. Permissions: **Contents: Read and write** (repository_dispatch용). 만료는 1년. 값을 복사한다(한 번만 보인다).
-2. cron-job.org(무료) 가입 → Create cronjob:
-   - URL: `https://api.github.com/repos/<owner>/<repo>/dispatches`
+1. GitHub 프로필 → Settings → Developer settings → Personal access tokens → **Fine-grained tokens** → Generate new token. 이름 `cron-tick`, 만료 90일~1년(갱신일을 미리알림에), Repository access: **Only select repositories → 이 저장소**, Permissions → Repository permissions → **Actions: Read and write** 하나만. 값을 복사한다(한 번만 보인다).
+   - 왜 Actions인가: 이 권한으로 할 수 있는 건 워크플로 깨우기·취소·재실행뿐이고 코드·시크릿에는 손댈 수 없다. Contents 쓰기 권한은 코드 푸시가 가능해 새면 위험하다(공식 권한 표 기준).
+2. cron-job.org(무료) 가입(2FA가 있으면 켠다) → Create cronjob:
+   - Title `tick`, URL: `https://api.github.com/repos/<owner>/<repo>/actions/workflows/tick.yml/dispatches`
    - Schedule: every 15 minutes
-   - Advanced → Request method **POST**, Headers: `Authorization: Bearer <토큰>`, `Accept: application/vnd.github+json`, Body: `{"event_type":"tick"}`
-3. 저장 뒤 "Run now"를 눌러 Actions에 `tick` 실행이 생기는지 본다. 게시 창 밖이면 tick은 아무것도 깨우지 않고 끝난다(정상).
-4. 토큰은 채팅·코드에 적지 않는다. 만료 전에 다시 발급해 cron-job.org에만 넣는다.
+   - Advanced → Request method **POST**, Headers 3줄: `Authorization: Bearer <토큰>` · `Accept: application/vnd.github+json` · `X-GitHub-Api-Version: 2022-11-28`, Body: `{"ref":"main"}`
+3. 저장 뒤 "Run now" → 응답 코드 **204**면 성공. Actions 탭에 `tick` 실행이 생긴다. 게시 창 밖이면 tick은 아무것도 깨우지 않고 끝난다(정상).
+4. Notifications에서 실패 알림(이메일)을 켠다. 토큰은 cron-job.org에만 둔다(채팅·코드·Notion에 쓰지 않는다). 만료 전에 다시 발급해 바꿔 넣는다.
+5. 대안: `repository_dispatch`(URL `…/dispatches`, 본문 `{"event_type":"tick"}`, 권한 Contents: Read and write)도 동작하지만 권한이 넓어 권하지 않는다. Cloudflare Workers Cron Trigger(무료, 코드 12줄)도 된다. 자세한 비교는 운영 저장소 research/2026-10-31-scheduling.md.
 
 ## 옛 길 (10/28~10/31, 이제 안 씀)
 
