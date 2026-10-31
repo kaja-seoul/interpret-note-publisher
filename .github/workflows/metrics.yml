@@ -27,6 +27,7 @@ jobs:
       - id: m
         env:
           THREADS_TOKEN: ${{ secrets.THREADS_TOKEN }}
+          THREADS_USERNAME: ${{ vars.THREADS_USERNAME }}
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
         run: python -m publisher.cli metrics
       - name: 팔로워 하루 기록 커밋

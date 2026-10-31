@@ -41,7 +41,7 @@ class BodyTests(unittest.TestCase):
         for bad in ["원문 https://x.com/a", "www.gatesnotes.com 참고", "claude.ai에서 설정", "자세한 건 gatesnotes.com/abc"]:
             r = checks.check_body("첫 줄\n" + bad)
             self.assertFalse(r.ok, bad)
-        for good in ["@interpret.note 통역", "v1.0 업데이트", "3.5배 빨라짐", "파일.png 열기", "e.g. 이렇게"]:
+        for good in ["@example.account 통역", "v1.0 업데이트", "3.5배 빨라짐", "파일.png 열기", "e.g. 이렇게"]:
             r = checks.check_body("첫 줄\n" + good)
             self.assertTrue(r.ok, f"{good}: {r.problems}")
 

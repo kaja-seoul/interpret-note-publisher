@@ -1,6 +1,6 @@
 # interpret-note-publisher
 
-스레드 채널 '실밸 통역사'(@interpret.note) 게시기. Notion 콘텐츠 캘린더에서 운영자가 **승인**한 글만 Threads 공식 API로 올린다. Claude API는 쓰지 않는다.
+스레드 계정 게시기. Notion 콘텐츠 캘린더에서 운영자가 **승인**한 글만 Threads 공식 API로 올린다. Claude API는 쓰지 않는다.
 
 ## 흐름
 
@@ -43,6 +43,8 @@
 | `THREADS_AUTH_CODE` | 처음 한 번, 1시간짜리 코드 | 운영자 (token-setup이 쓰고 지움) |
 | `THREADS_TOKEN` | 장기 토큰(60일) | token-setup이 넣고, token-refresh가 매주 새로 고침 |
 | `GH_PAT` | 이 저장소 Secrets 쓰기 권한만 있는 토큰 | 운영자 |
+
+Variables(같은 화면의 **Variables** 탭)에는 `THREADS_USERNAME`(게시할 Threads 계정 이름, `@` 없이)을 넣는다. 비어 있으면 게시·verify·metrics·comments가 올리지 않고 멈춘다. 계정 이름은 코드에 두지 않는다.
 
 토큰과 키는 채팅·코드·로그에 남기지 않는다.
 

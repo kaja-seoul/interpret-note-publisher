@@ -52,5 +52,6 @@ jobs:
       - run: pip install -q -r requirements.txt
       - env:
           THREADS_TOKEN: ${{ secrets.THREADS_TOKEN }}
+          THREADS_USERNAME: ${{ vars.THREADS_USERNAME }}
           PAGES_URL: ${{ needs.deploy.outputs.page_url }}
         run: python -m publisher.cli selftest --pages-url "$PAGES_URL"

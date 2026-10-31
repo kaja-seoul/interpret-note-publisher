@@ -163,6 +163,7 @@ jobs:
         name: 기다렸다가 게시 · 첫 답글 · Notion 기록
         env:
           THREADS_TOKEN: ${{ secrets.THREADS_TOKEN }}
+          THREADS_USERNAME: ${{ vars.THREADS_USERNAME }}
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           KEY: ${{ needs.prepare.outputs.key }}
           PAGES_URL: ${{ needs.pages.outputs.page_url }}

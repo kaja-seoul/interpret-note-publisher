@@ -30,5 +30,6 @@ jobs:
       - run: pip install -q -r requirements.txt
       - env:
           THREADS_TOKEN: ${{ secrets.THREADS_TOKEN }}
+          THREADS_USERNAME: ${{ vars.THREADS_USERNAME }}
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
         run: python -m publisher.cli comments

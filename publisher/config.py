@@ -29,7 +29,17 @@ DAILY_MAX = 2               # 하루 최대 2글 (스킬 2장)
 CARDS_MIN = 1               # 카드 1(원문 카드)은 늘 넣는다 (스킬 8장). 메모에 '카드 없음'이 있으면 예외
 NO_CARD_FLAG = "카드 없음"
 
-ACCOUNT = os.environ.get("THREADS_USERNAME", "interpret.note")
+# 게시할 Threads 계정 이름. 코드에 두지 않고 Actions Variables(THREADS_USERNAME)에서만 읽는다.
+ACCOUNT = os.environ.get("THREADS_USERNAME", "").strip().lstrip("@")
+ACCOUNT_WHERE = "Settings → Secrets and variables → Actions → Variables의 THREADS_USERNAME"
+
+
+def check_account(username: str | None) -> None:
+    """토큰 계정이 설정한 계정인지 본다. 설정이 비었거나 다르면 올리지 않는다."""
+    if not ACCOUNT:
+        raise RuntimeError(f"THREADS_USERNAME이 비어 있다. {ACCOUNT_WHERE}에 넣어라.")
+    if username != ACCOUNT:
+        raise RuntimeError(f"토큰 계정이 @{username}다. @{ACCOUNT}에만 올린다.")
 
 # 캘린더 속성 이름
 P_TITLE = "제목"

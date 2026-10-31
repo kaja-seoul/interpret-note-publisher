@@ -37,8 +37,7 @@ def _ts(s: str | None) -> str | None:
 
 def run(nt: Notion, th, now: datetime, log=print) -> dict:
     me = th.me()
-    if me.get("username") != C.ACCOUNT:
-        raise RuntimeError(f"토큰 계정이 @{me.get('username')}다")
+    C.check_account(me.get("username"))
     th.user_id = me["id"]
 
     posts = [p for p in th.recent_posts(10) if p.get("media_type") != "REPOST_FACADE"][:POSTS_TO_READ]

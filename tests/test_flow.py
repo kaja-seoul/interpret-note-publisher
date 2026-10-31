@@ -26,8 +26,8 @@ def cal_row():
             "본문": {"type": "rich_text", "rich_text": [{"plain_text": N002}]},
             "첫 답글": {"type": "rich_text", "rich_text": [{"plain_text": "통역 노트 #003 · 출처 ↓\n\nhttps://example.com/a"}]},
             "카드": {"type": "files", "files": [
-                {"name": "실밸통역사_통역노트003_2of2.png", "type": "file", "file": {"url": "https://n/2"}},
-                {"name": "실밸통역사_통역노트003_1of2.png", "type": "file", "file": {"url": "https://n/1"}},
+                {"name": "예시계정_통역노트003_2of2.png", "type": "file", "file": {"url": "https://n/2"}},
+                {"name": "예시계정_통역노트003_1of2.png", "type": "file", "file": {"url": "https://n/1"}},
             ]},
             "연재": {"type": "select", "select": {"name": "통역 노트"}},
             "번호": {"type": "number", "number": 3},
@@ -65,7 +65,7 @@ class FakeThreads:
         self.published, self.containers = [], []
 
     def me(self):
-        return {"id": "99", "username": "interpret.note"}
+        return {"id": "99", "username": "example.account"}
 
     def followers_count(self):
         return 42
@@ -92,7 +92,7 @@ class FakeThreads:
         return mid
 
     def permalink(self, mid):
-        return "https://www.threads.com/@interpret.note/post/ABC"
+        return "https://www.threads.com/@example.account/post/ABC"
 
     def replies(self, mid):
         return []

@@ -38,7 +38,7 @@ class FakeThreads:
     user_id = "me"
 
     def me(self):
-        return {"id": "9", "username": "interpret.note"}
+        return {"id": "9", "username": "example.account"}
 
     def recent_posts(self, limit=10):
         return [{"id": "P1", "permalink": "https://t/p1"}, {"id": "P2", "permalink": "https://t/p2"},
@@ -50,9 +50,9 @@ class FakeThreads:
         return [
             {"id": "A", "username": "kim", "text": "질문 있어요", "timestamp": "2026-10-28T00:10:00+0000",
              "replied_to": {"id": "P1"}, "permalink": "https://t/a"},
-            {"id": "SRC", "username": "interpret.note", "is_reply_owned_by_me": True, "replied_to": {"id": "P1"}},
+            {"id": "SRC", "username": "example.account", "is_reply_owned_by_me": True, "replied_to": {"id": "P1"}},
             {"id": "B", "username": "lee", "text": "좋아요", "replied_to": {"id": "A"}},
-            {"id": "M", "username": "interpret.note", "is_reply_owned_by_me": True, "replied_to": {"id": "B"}},
+            {"id": "M", "username": "example.account", "is_reply_owned_by_me": True, "replied_to": {"id": "B"}},
         ]
 
 
@@ -80,7 +80,7 @@ class CommentTests(unittest.TestCase):
         }}
         th = FakeThreads()
         base = th.replies("P1")
-        th.replies = lambda mid: (base + [{"id": "M2", "username": "interpret.note", "is_reply_owned_by_me": True,
+        th.replies = lambda mid: (base + [{"id": "M2", "username": "example.account", "is_reply_owned_by_me": True,
                                            "replied_to": {"id": "A"}}]) if mid == "P1" else []
         nt = FakeNotion([row])
         res = comments.run(nt, th, K(22, 35), log=lambda *a: None)

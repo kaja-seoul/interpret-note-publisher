@@ -406,8 +406,7 @@ def cmd_post(a) -> int:
 
     me = th.me()
     username = me.get("username", "")
-    if username != C.ACCOUNT:
-        raise RuntimeError(f"토큰 계정이 @{username}다. @{C.ACCOUNT}에만 올린다.")
+    C.check_account(username)
     th.user_id = me["id"]
 
     followers_before = th.followers_count()
@@ -550,8 +549,10 @@ def cmd_selftest(a) -> int:
     wait_public(urls)
     th = threads()
     me = th.me()
-    if me.get("username") != C.ACCOUNT:
-        _note(False, f"토큰 계정이 @{me.get('username')}다")
+    try:
+        C.check_account(me.get("username"))
+    except RuntimeError as e:
+        _note(False, str(e))
         return 1
     th.user_id = me["id"]
     try:
@@ -593,9 +594,12 @@ def cmd_verify(a) -> int:
             th = threads()
             me = th.me()
             th.user_id = me["id"]
-            good = me.get("username") == C.ACCOUNT
-            ok &= good
-            _note(good, f"Threads 계정 @{me.get('username')}" + ("" if good else f" (게시기는 @{C.ACCOUNT}에만 올린다)"))
+            try:
+                C.check_account(me.get("username"))
+                _note(True, f"Threads 계정 @{me.get('username')}")
+            except RuntimeError as e:
+                ok = False
+                _note(False, f"Threads 계정 @{me.get('username')} · {e}")
             lim = (th.publishing_limit().get("data") or [{}])[0]
             used = lim.get("quota_usage")
             total = (lim.get("config") or {}).get("quota_total")
