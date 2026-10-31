@@ -123,3 +123,11 @@ class CapTests(unittest.TestCase):
         items = collect.parse_feed(RSS, "s", "k")  # 2 dated + 1 undated
         out = collect.newest(items, 1)
         self.assertEqual([i.title for i in out], ["ChatGPT adds Lock chats with a PIN", "No date item"])
+
+
+class FilterTests(unittest.TestCase):
+    def test_title_filter_and_bytes(self):
+        src = [{"name": "매체", "url": "u-rss", "type": "rss", "kind": "매체", "filter": r"ChatGPT|Gemini"}]
+        res = collect.run(src, NOW, None, Path(tempfile.mkdtemp()) / "o", log=lambda *a: None,
+                          fetch_fn=lambda u: FEEDS[u].encode("utf-8"))
+        self.assertEqual(res["items"], 1)  # 'No date item'은 걸러지고 PIN 글만

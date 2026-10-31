@@ -48,10 +48,11 @@ class Item:
 
 
 # ---- 가져오기 ----
-def fetch(url: str) -> str:
+def fetch(url: str) -> bytes:
+    """바이트로 돌려준다. XML 파서가 선언된 인코딩을 쓰게 해서 이모지·한글이 깨지지 않게(TLDR 피드가 깨졌었다)."""
     r = requests.get(url, headers={"User-Agent": UA, "Accept": "application/rss+xml, application/atom+xml, application/xml, text/xml, application/json, */*"}, timeout=TIMEOUT)
     r.raise_for_status()
-    return r.text
+    return r.content
 
 
 def _text(el, *names) -> str:
@@ -117,9 +118,9 @@ def parse_feed(xml_text: str, source: str, kind: str, limit: int = 40) -> list[I
     return [i for i in out if i.title and i.link]
 
 
-def parse_appstore(json_text: str, source: str) -> list[Item]:
+def parse_appstore(json_text, source: str) -> list[Item]:
     """iTunes lookup JSON → '새로운 기능' 한 항목."""
-    d = json.loads(json_text)
+    d = json.loads(json_text if isinstance(json_text, str) else json_text.decode("utf-8", "replace"))
     res = (d.get("results") or [None])[0]
     if not res or not res.get("releaseNotes"):
         return []
@@ -217,7 +218,8 @@ def newest(items: list[Item], n: int) -> list[Item]:
 
 def run(sources: list[dict], now: datetime, nt: Notion | None, out_dir: Path, log=print,
         since_days: int = 14, fetch_fn=fetch, max_per_source: int = C.COLLECT_MAX_PER_SOURCE) -> dict:
-    """sources: [{name, url, type: rss|appstore|korean, kind}]. korean 타입은 중복 확인용이라 후보에 넣지 않는다."""
+    """sources: [{name, url, type: rss|appstore|korean, kind, filter?}]. korean 타입은 중복 확인용이라 후보에 넣지 않는다.
+    filter는 제목 정규식(대소문자 무시). 잡다한 매체 피드에서 AI·설정 관련만 남길 때 쓴다."""
     items: list[Item] = []
     korean_titles: list[str] = []
     failed: list[str] = []
@@ -232,6 +234,8 @@ def run(sources: list[dict], now: datetime, nt: Notion | None, out_dir: Path, lo
                 korean_titles += [i.title for i in fresh(got, now, 3)]
                 log(f"한국 확인용 {s['name']}: {len(got)}건")
             else:
+                if s.get("filter"):
+                    got = [i for i in got if re.search(s["filter"], i.title, re.I)]
                 keep = newest(fresh(got, now, since_days), max_per_source)
                 items += keep
                 log(f"{s['name']}: {len(got)}건 → 최근 {since_days}일 {len(fresh(got, now, since_days))}건 → {len(keep)}건")
