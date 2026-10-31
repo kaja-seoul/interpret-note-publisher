@@ -2,7 +2,7 @@
 
   python -m publisher.cli prepare --slot 08:07 [--page-id ID] [--now]
   python -m publisher.cli post --key KEY --pages-url URL [--dry-run] [--now]
-  python -m publisher.cli build-site
+  python -m publisher.cli build-site        # Pages 내용. Variables NOTES_PAGE=true면 notes/ 모음 페이지도 만든다
   python -m publisher.cli verify            # 토큰·Notion 연결 확인 (값은 안 찍음)
   python -m publisher.cli check             # 슬롯이 지났는데 '승인'인 글, Threads API 상태 (문제면 빨간불)
   python -m publisher.cli tick              # 외부 cron의 tick: 지금 깨울 워크플로 목록을 출력에 남김
@@ -429,6 +429,12 @@ def cmd_build_site(a) -> int:
                     shutil.copy2(p, site / "c" / d.name / p.name)
     n = sum(1 for _ in (site / "c").rglob("card*"))
     log(f"_site 준비: 카드 {n}장")
+    if os.environ.get("NOTES_PAGE", "").strip().lower() in ("1", "true", "yes"):
+        from . import archive
+        posts = archive.load_posts(POSTS) if POSTS.exists() else []
+        (site / "notes").mkdir(exist_ok=True)
+        (site / "notes" / "index.html").write_text(archive.render(posts, site_root=".."), encoding="utf-8")
+        log(f"모음 페이지(notes/): 글 {len(posts)}개")
     return 0
 
 

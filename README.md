@@ -58,7 +58,7 @@ Variables(같은 화면의 **Variables** 탭)에는 `THREADS_USERNAME`(게시할
 - `metrics` 매시(tick): 게시 뒤 24~30시간 글의 지표를 게시 로그에, 08~10시 첫 실행이 팔로워 하루 기록
 - `comments` 매시(tick): 내 최근 글 3개 답글 → Notion '댓글함' (내가 답함 표시)
 - `token-setup` 첫 토큰 발급 / `token-refresh` 매주 월 03:13 갱신
-- `site` 토큰 받기 페이지 공개
+- `site` 토큰 받기 페이지 공개. Variables `NOTES_PAGE=true`를 넣으면 Pages의 `notes/`에 '통역 노트 모음' 페이지(게시된 글·카드·출처·스레드 링크, posts/ 원장에서 자동 생성)도 같이 공개한다. 켜기 전엔 만들지 않는다
 
 ## 하지 않는 것
 
