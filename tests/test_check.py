@@ -48,7 +48,9 @@ class CmdCheckTests(unittest.TestCase):
         self.outputs = self.tmp / "out.txt"
         self.outputs.write_text("")
         mock.patch.object(cli, "NOTICES", self.tmp / "notices.txt").start()
+        mock.patch.object(cli, "POSTS", self.tmp / "posts").start()
         mock.patch.object(cli, "now_kst", lambda: kst(31, 8, 50)).start()
+        mock.patch.object(cli.C, "RUNLOG_DS", "").start()
         mock.patch.dict("os.environ", {"GITHUB_OUTPUT": str(self.outputs)}).start()
 
     def tearDown(self):
@@ -99,3 +101,88 @@ class CmdCheckTests(unittest.TestCase):
         mock.patch.object(cli, "notion", lambda: nt).start()
         mock.patch.object(cli, "threads", lambda: Other()).start()
         self.assertEqual(cli.main(["check"]), 1)
+
+
+class RunLogNotion(FakeNotion):
+    """캘린더 행과 런 로그 행을 데이터 소스별로 돌려준다."""
+
+    def __init__(self, rows, runlog):
+        super().__init__(rows)
+        self.runlog = runlog  # [(date_iso, job)]
+
+    def query(self, ds, filter=None, sorts=None):
+        if ds == "runlog":
+            day = filter["and"][0]["date"]["equals"]
+            job = filter["and"][1]["select"]["equals"]
+            return [{"id": "r"} for d, j in self.runlog if d == day and j == job]
+        return super().query(ds, filter, sorts)
+
+
+def ledger(tmp, day, slot, media="1"):
+    d = tmp / "posts" / f"{day.replace('-', '')}-{slot.replace(':', '')}-abc"
+    d.mkdir(parents=True, exist_ok=True)
+    import json
+    (d / "post.json").write_text(json.dumps({"media_id": media, "posted_at": f"{day}T08:10:00+09:00"}), encoding="utf-8")
+
+
+class HeartbeatAndZeroDayTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.outputs = self.tmp / "out.txt"
+        self.outputs.write_text("")
+        mock.patch.object(cli, "NOTICES", self.tmp / "notices.txt").start()
+        mock.patch.object(cli, "POSTS", self.tmp / "posts").start()
+        mock.patch.object(cli, "threads", lambda: GoodThreads()).start()
+        mock.patch.dict("os.environ", {"GITHUB_OUTPUT": str(self.outputs)}).start()
+
+    def tearDown(self):
+        mock.patch.stopall()
+
+    def test_morning_run_logged_is_green(self):
+        mock.patch.object(cli.C, "RUNLOG_DS", "runlog").start()
+        mock.patch.object(cli, "now_kst", lambda: kst(31, 8, 50)).start()
+        nt = RunLogNotion([], [("2026-10-31", "아침 런")])
+        mock.patch.object(cli, "notion", lambda: nt).start()
+        ledger(self.tmp, "2026-10-30", "21:37")
+        self.assertEqual(cli.main(["check"]), 0)
+
+    def test_morning_run_missing_is_red(self):
+        mock.patch.object(cli.C, "RUNLOG_DS", "runlog").start()
+        mock.patch.object(cli, "now_kst", lambda: kst(31, 8, 50)).start()
+        nt = RunLogNotion([], [("2026-10-30", "아침 런")])
+        mock.patch.object(cli, "notion", lambda: nt).start()
+        ledger(self.tmp, "2026-10-30", "21:37")
+        self.assertEqual(cli.main(["check"]), 1)
+
+    def test_evening_expects_evening_job(self):
+        mock.patch.object(cli.C, "RUNLOG_DS", "runlog").start()
+        mock.patch.object(cli, "now_kst", lambda: kst(31, 22, 20)).start()
+        nt = RunLogNotion([], [("2026-10-31", "저녁 글감 런")])
+        mock.patch.object(cli, "notion", lambda: nt).start()
+        ledger(self.tmp, "2026-10-31", "08:07")
+        self.assertEqual(cli.main(["check"]), 0)
+
+    def test_no_runlog_configured_skips_heartbeat(self):
+        mock.patch.object(cli.C, "RUNLOG_DS", "").start()
+        mock.patch.object(cli, "now_kst", lambda: kst(31, 8, 50)).start()
+        nt = RunLogNotion([], [])
+        mock.patch.object(cli, "notion", lambda: nt).start()
+        ledger(self.tmp, "2026-10-31", "08:07")
+        self.assertEqual(cli.main(["check"]), 0)
+
+    def test_zero_days_three_is_red_two_is_warning(self):
+        mock.patch.object(cli.C, "RUNLOG_DS", "").start()
+        nt = RunLogNotion([], [])
+        mock.patch.object(cli, "notion", lambda: nt).start()
+        ledger(self.tmp, "2026-10-28", "21:37")
+        mock.patch.object(cli, "now_kst", lambda: kst(30, 8, 50)).start()
+        self.assertEqual(cli.main(["check"]), 0)       # 2일째: 경고만
+        mock.patch.object(cli, "now_kst", lambda: kst(31, 8, 50)).start()
+        self.assertEqual(cli.main(["check"]), 1)       # 3일째: 빨강
+
+    def test_no_ledger_at_all_is_quiet(self):
+        mock.patch.object(cli.C, "RUNLOG_DS", "").start()
+        nt = RunLogNotion([], [])
+        mock.patch.object(cli, "notion", lambda: nt).start()
+        mock.patch.object(cli, "now_kst", lambda: kst(31, 8, 50)).start()
+        self.assertEqual(cli.main(["check"]), 0)

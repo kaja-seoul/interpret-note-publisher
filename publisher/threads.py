@@ -105,12 +105,15 @@ class Threads:
             p["alt_text"] = alt_text[:1000]
         return self._req("POST", f"{self.user_id}/threads", p)["id"]
 
-    def create_post_container(self, text: str, image_urls: list[str], alt_texts: list[str] | None = None) -> str:
+    def create_post_container(self, text: str, image_urls: list[str], alt_texts: list[str] | None = None,
+                              topic_tag: str | None = None) -> str:
+        """글 컨테이너. topic_tag는 글당 1개(1~50자, '.'·'&' 금지) — 토픽을 단 글이 조회가 더 많다는 Meta 안내."""
         alt_texts = alt_texts or [None] * len(image_urls)
+        extra = {"topic_tag": topic_tag} if topic_tag else {}
         if not image_urls:
-            return self._req("POST", f"{self.user_id}/threads", {"media_type": "TEXT", "text": text})["id"]
+            return self._req("POST", f"{self.user_id}/threads", {"media_type": "TEXT", "text": text, **extra})["id"]
         if len(image_urls) == 1:
-            p = {"media_type": "IMAGE", "image_url": image_urls[0], "text": text}
+            p = {"media_type": "IMAGE", "image_url": image_urls[0], "text": text, **extra}
             if alt_texts[0]:
                 p["alt_text"] = alt_texts[0][:1000]
             return self._req("POST", f"{self.user_id}/threads", p)["id"]
@@ -123,7 +126,7 @@ class Threads:
         return self._req(
             "POST",
             f"{self.user_id}/threads",
-            {"media_type": "CAROUSEL", "children": ",".join(children), "text": text},
+            {"media_type": "CAROUSEL", "children": ",".join(children), "text": text, **extra},
         )["id"]
 
     def create_reply_container(self, text: str, reply_to_id: str) -> str:

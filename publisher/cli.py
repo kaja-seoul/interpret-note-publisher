@@ -137,6 +137,30 @@ def snapshot(page: dict) -> str:
     return hashlib.sha256("\n\0".join(parts).encode()).hexdigest()
 
 
+def topic_of(nt: Notion | None, page: dict) -> str:
+    """'토픽' 칸의 태그 1개. 규칙(1~50자, '.'·'&' 없음)에 어긋나면 알리고 태그 없이 올린다."""
+    tag = (select_of(page, C.P_TOPIC) or text_of(page, C.P_TOPIC)).strip().lstrip("#")
+    if not tag:
+        return ""
+    if len(tag) > 50 or "." in tag or "&" in tag:
+        notice(nt, page["id"], f"토픽 태그 '{tag}'는 규칙(1~50자, '.'·'&' 금지)에 어긋나 태그 없이 올린다.")
+        return ""
+    return tag
+
+
+def last_post_day():
+    """posts/ 원장에서 마지막으로 올린 날(KST date). 없으면 None."""
+    days = []
+    for p in POSTS.glob("*/post.json"):
+        try:
+            d = json.loads(p.read_text(encoding="utf-8"))
+            if d.get("media_id") and d.get("posted_at"):
+                days.append(datetime.fromisoformat(d["posted_at"]).astimezone(C.KST).date())
+        except (ValueError, KeyError):
+            pass
+    return max(days) if days else None
+
+
 def posted_slot(day, slot: str) -> bool:
     """이 날 이 슬롯 글을 이미 올렸나 (posts/ 원장 기준)."""
     for p in POSTS.glob(f"{day:%Y%m%d}-{slot.replace(':', '')}-*/post.json"):
@@ -369,6 +393,7 @@ def stage(nt: Notion, page: dict, slot: str, slot_dt: datetime | None, now: date
         "reply": reply,
         "cards": saved,
         "source_url": url_of(page, C.P_SOURCE),
+        "topic": topic_of(nt, page),
         "target": target.isoformat(),
         "prepared_at": now.isoformat(),
         "snapshot": snapshot(page),
@@ -462,7 +487,7 @@ def cmd_post(a) -> int:
         summary(f"### 올리지 않음: 준비 뒤 상태가 '{select_of(page, C.P_STATUS)}'로 바뀜")
         return 0
     if snapshot(page) != meta["snapshot"]:
-        notice(nt, pid, "준비한 뒤 본문·첫 답글·카드가 바뀌어 이번엔 올리지 않았다. 다음 실행(20분 간격, 슬롯 뒤 90분까지)에서 다시 검사해 올린다.")
+        notice(nt, pid, "준비한 뒤 본문·첫 답글·카드가 바뀌어 이번엔 올리지 않았다. 같은 창의 다음 깨우기(슬롯 뒤 90분까지)가 다시 검사해 올리고, 없으면 다음 슬롯에 올린다.")
         return 0
 
     base = a.pages_url.rstrip("/") + f"/c/{meta['key']}/"
@@ -485,7 +510,7 @@ def cmd_post(a) -> int:
             break
 
     if media_id is None:
-        cid = th.create_post_container(meta["text"], urls)
+        cid = th.create_post_container(meta["text"], urls, topic_tag=meta.get("topic") or None)
         th.wait_ready(cid)
         if dry:
             kind = "TEXT" if not urls else ("IMAGE" if len(urls) == 1 else "CAROUSEL")
@@ -666,8 +691,36 @@ def cmd_check(a) -> int:
                                 "그대로 두면 다음 슬롯에 올라가고, 바로 올리려면 Actions의 publish를 page_id로 수동 실행(dry_run 끄기)한다")
     if not stuck:
         _note(True, f"{now:%m/%d %H:%M} 남은 '승인' 글 없음")
+    # 심장박동: 오늘 그 런이 돌았나 (런 로그 DB가 설정돼 있을 때만)
+    if C.RUNLOG_DS:
+        job = C.RUNLOG_MORNING_JOB if now.hour < 12 else C.RUNLOG_EVENING_JOB
+        try:
+            if run_logged(nt, now.date(), job):
+                _note(True, f"{now:%m/%d} {job} 런 로그 있음")
+            else:
+                ok = False
+                _note(False, f"{now:%m/%d} {job}이 돌지 않았다(런 로그 없음). 사용량 한도나 오류다. 오늘 글은 쉬거나 '보류' 행을 승인한다")
+        except Exception as e:
+            _note(False, f"런 로그 읽기 실패: {e}")
+    # 글 0일 연속 (posts/ 원장)
+    last = last_post_day()
+    if last is not None:
+        gap = (now.date() - last).days
+        if gap >= C.ZERO_DAYS_RED:
+            ok = False
+            _note(False, f"{last:%m/%d} 뒤로 {gap}일째 게시 0. 글감 회의가 필요하다(보고서 4절 소재 파이프라인)")
+        elif gap >= C.ZERO_DAYS_WARN:
+            _warn(f"{last:%m/%d} 뒤로 {gap}일째 게시 0")
     gh_output(rekick="true" if rekick else "false", stuck="true" if stuck else "false")
     return 0 if ok else 1
+
+
+def run_logged(nt: Notion, day, job: str) -> bool:
+    rows = nt.query(C.RUNLOG_DS, {"and": [
+        {"property": C.RUNLOG_P_DATE, "date": {"equals": day.isoformat()}},
+        {"property": C.RUNLOG_P_JOB, "select": {"equals": job}},
+    ]})
+    return bool(rows)
 
 
 # ---------- tick ----------

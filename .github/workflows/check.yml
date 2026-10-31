@@ -31,6 +31,7 @@ jobs:
           THREADS_TOKEN: ${{ secrets.THREADS_TOKEN }}
           THREADS_USERNAME: ${{ vars.THREADS_USERNAME }}
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_RUNLOG_DS: ${{ vars.NOTION_RUNLOG_DS }}   # 런 로그 DB(collection id). 비우면 심장박동 검사는 건너뜀
         run: python -m publisher.cli check
       - name: 게시기 한 번 더 깨우기 (창 안일 때만)
         if: always() && steps.c.outputs.rekick == 'true'

@@ -25,6 +25,7 @@
 ## 형식 검사 (코드, LLM 없음)
 
 본문: 첫 줄 25자 이내(공백 포함) · 빈 줄 빼고 8줄 이하 · 링크 0개(맨 도메인 포함) · 500자 이하(이모지는 UTF-8 바이트로 셈).
+토픽: 캘린더 '토픽' 칸에 태그 1개(1~50자, `.`·`&` 금지)를 넣으면 Threads 토픽 태그로 단다. 비면 안 단다. 규칙에 어긋나면 알리고 태그 없이 올린다.
 첫 답글: API 한도만(500자, 고유 링크 5개). 카드: PNG/JPG, 8MB 이하, 20장 이하.
 하나라도 어기면 올리지 않고 알린다.
 
@@ -44,7 +45,7 @@
 | `THREADS_TOKEN` | 장기 토큰(60일) | token-setup이 넣고, token-refresh가 매주 새로 고침 |
 | `GH_PAT` | 이 저장소 Secrets 쓰기 권한만 있는 토큰 | 운영자 |
 
-Variables(같은 화면의 **Variables** 탭)에는 `THREADS_USERNAME`(게시할 Threads 계정 이름, `@` 없이)을 넣는다. 비어 있으면 게시·verify·metrics·comments가 올리지 않고 멈춘다. 계정 이름은 코드에 두지 않는다.
+Variables(같은 화면의 **Variables** 탭)에는 `THREADS_USERNAME`(게시할 Threads 계정 이름, `@` 없이)을 넣는다. 선택: `NOTION_RUNLOG_DS`(런 로그 데이터 소스 id)를 넣으면 check가 런이 돌았는지도 본다. 비어 있으면 게시·verify·metrics·comments가 올리지 않고 멈춘다. 계정 이름은 코드에 두지 않는다.
 
 토큰과 키는 채팅·코드·로그에 남기지 않는다.
 
@@ -52,7 +53,7 @@ Variables(같은 화면의 **Variables** 탭)에는 `THREADS_USERNAME`(게시할
 
 - `tick` 외부 cron이 15분마다 깨움. 한국 시각을 보고 kick(게시기)·check·metrics·comments를 깨운다 (publisher/tick.py)
 - `publish` 게시. 손으로 돌릴 때: `slot`(auto = 창이 닫힐 때까지 승인 글을 기다림) · `page_id`(시험할 캘린더 행) · `dry_run`(기본 켜짐: 컨테이너까지만 만들고 게시 안 함)
-- `check` 슬롯 뒤 확인: 아직 '승인'인 글이 있으면 알리고(창 안이면 한 번 더 깨움), Threads API가 죽었으면 빨간불
+- `check` 슬롯 뒤 확인: 아직 '승인'인 글이 있으면 알리고(창 안이면 한 번 더 깨움), Threads API가 죽었으면 빨간불. Variables `NOTION_RUNLOG_DS`가 있으면 오늘 아침·저녁 런의 런 로그 행이 있는지(심장박동)도 보고, posts/ 원장으로 게시 0일이 2일째면 경고·3일째면 빨간불
 - `verify` Threads 계정·한도·팔로워·키워드 검색 권한, Notion 칸 확인 (코드가 바뀌면 저절로)
 - `metrics` 매시(tick): 게시 뒤 24~30시간 글의 지표를 게시 로그에, 08~10시 첫 실행이 팔로워 하루 기록
 - `comments` 매시(tick): 내 최근 글 3개 답글 → Notion '댓글함' (내가 답함 표시)

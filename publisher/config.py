@@ -56,6 +56,17 @@ P_NUMBER = "번호"
 P_VAR = "변수"
 P_MEMO = "메모"
 P_SOURCE = "원문 링크"
+P_TOPIC = "토픽"             # 선택: Threads 토픽 태그 1개 (1~50자, '.'·'&' 금지). 비면 안 단다
+
+# 런 로그 (Notion). 아침·저녁 런이 끝에 1행 쓴다. check가 "오늘 런이 돌았나"(심장박동)를 본다. 비어 있으면 그 검사는 건너뛴다
+RUNLOG_DS = os.environ.get("NOTION_RUNLOG_DS", "")
+RUNLOG_P_DATE = "날짜"
+RUNLOG_P_JOB = "작업"
+RUNLOG_MORNING_JOB = "아침 런"
+RUNLOG_EVENING_JOB = "저녁 글감 런"
+# 글 0일 연속 (posts/ 원장 기준): 2일째 노랑, 3일째 빨강 "글감 회의 필요"
+ZERO_DAYS_WARN = 2
+ZERO_DAYS_RED = 3
 
 S_APPROVED = "승인"
 S_POSTED = "게시됨"
