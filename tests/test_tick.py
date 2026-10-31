@@ -44,3 +44,9 @@ class TickTests(unittest.TestCase):
         self.assertEqual(decide(at(9, 0)), ["check", "metrics", "comments"])
         self.assertEqual(decide(at(22, 0)), ["metrics", "comments"])
         self.assertEqual(decide(at(22, 15)), ["check"])
+
+    def test_collect_window(self):
+        self.assertEqual(decide(at(5, 0)), ["collect", "metrics", "comments"])
+        self.assertEqual(decide(at(5, 15)), ["collect"])
+        self.assertEqual(decide(at(5, 30)), [])
+        self.assertNotIn("collect", decide(at(4, 45)))

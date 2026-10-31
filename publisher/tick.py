@@ -9,6 +9,7 @@ GitHub 예약 실행(cron)은 몇 시간씩 늦게 와서(10/27~31 확인: 전�
 - kick:     슬롯 52분 전부터 30분 (08:07 슬롯 → 07:15~07:44, 21:37 슬롯 → 20:45~21:14). publish가 감시 모드로 돈다.
 - check:    슬롯 38분 뒤부터 30분 (08:45~09:14, 22:15~22:44). 아직 '승인'인 글과 Threads API 상태를 본다.
 - metrics·comments: 매시 첫 tick(분이 15 미만일 때).
+- collect:  05:00~05:29 (수집기 v1, 하루 한 번).
 """
 from __future__ import annotations
 
@@ -37,6 +38,9 @@ def decide(now: datetime) -> list[str]:
             out.append("kick")
         if _in(now, slot_dt, CHECK_OFFSET_MIN) and "check" not in out:
             out.append("check")
+    collect_at = now.replace(hour=C.COLLECT_HOUR, minute=0, second=0, microsecond=0)
+    if _in(now, collect_at, 0):
+        out.append("collect")
     if now.minute < TICK_MIN:
         out += ["metrics", "comments"]
     return out

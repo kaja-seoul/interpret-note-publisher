@@ -6,6 +6,7 @@
   python -m publisher.cli verify            # 토큰·Notion 연결 확인 (값은 안 찍음)
   python -m publisher.cli check             # 슬롯이 지났는데 '승인'인 글, Threads API 상태 (문제면 빨간불)
   python -m publisher.cli tick              # 외부 cron의 tick: 지금 깨울 워크플로 목록을 출력에 남김
+  python -m publisher.cli collect           # 수집기 v1: 피드·앱스토어 → 글감 후보 → Notion 수집함(또는 collected/digest.md)
 
 prepare: 캘린더에서 올릴 글 하나를 고르고 형식 검사, 카드를 staged/<key>/에 받는다.
          --watch면 게시 창(슬롯 55분 전 ~ 90분 뒤)이 닫힐 때까지 3분마다 다시 본다. 깨우기 한 번으로 늦은 승인까지 받는다.
@@ -739,6 +740,19 @@ def cmd_tick(a) -> int:
     return 0
 
 
+# ---------- collect ----------
+def cmd_collect(a) -> int:
+    """수집기 v1: 피드·앱스토어 → 글감 후보 → Notion 수집함(없으면 collected/digest.md)."""
+    from . import collect
+    from .sources import SOURCES
+    nt = notion() if C.INBOX_DS else None
+    res = collect.run(SOURCES, now_kst(), nt, ROOT / "collected", log, since_days=C.COLLECT_SINCE_DAYS)
+    _note(True, f"수집: 후보 {res['items']}건 · 수집함에 넣음 {res['created']}건 · 한국 확인 제목 {res['korean_titles']}개 · 실패 소스 {len(res['failed'])}개")
+    for f in res["failed"]:
+        _warn(f"소스 실패: {f}")
+    return 0
+
+
 # ---------- selftest ----------
 def cmd_selftest(a) -> int:
     """Threads가 GitHub Pages 이미지를 가져가는지 본다. 캐러셀 컨테이너까지만 만들고 게시하지 않는다."""
@@ -867,12 +881,13 @@ def main(argv=None) -> int:
     sub.add_parser("comments")
     sub.add_parser("check")
     sub.add_parser("tick")
+    sub.add_parser("collect")
     p = sub.add_parser("selftest")
     p.add_argument("--pages-url", required=True)
     a = ap.parse_args(argv)
     fn = {"prepare": cmd_prepare, "post": cmd_post, "build-site": cmd_build_site, "verify": cmd_verify,
           "selftest": cmd_selftest, "metrics": cmd_metrics, "comments": cmd_comments,
-          "check": cmd_check, "tick": cmd_tick}[a.cmd]
+          "check": cmd_check, "tick": cmd_tick, "collect": cmd_collect}[a.cmd]
     rc = fn(a)
     if a.cmd in ("prepare", "post", "check"):
         gh_output(notices="true" if NOTICES.exists() and NOTICES.read_text(encoding="utf-8").strip() else "false")

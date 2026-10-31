@@ -65,6 +65,21 @@ RUNLOG_P_JOB = "작업"
 RUNLOG_MORNING_JOB = "아침 런"
 RUNLOG_EVENING_JOB = "저녁 글감 런"
 # 글 0일 연속 (posts/ 원장 기준): 2일째 노랑, 3일째 빨강 "글감 회의 필요"
+
+# 수집함 (Notion). 수집기 v1(collect)이 쓴다. 비어 있으면 collected/digest.md만 만든다
+INBOX_DS = os.environ.get("NOTION_INBOX_DS", "")
+INBOX_P_TITLE = "제목"
+INBOX_P_LINK = "링크"
+INBOX_P_SOURCE = "출처"
+INBOX_P_KIND = "종류"
+INBOX_P_PUBLISHED = "게시일"
+INBOX_P_COLLECTED = "수집일"
+INBOX_P_SUMMARY = "요약"
+INBOX_P_KDUP = "한국 중복"
+INBOX_P_STATUS = "상태"
+INBOX_S_NEW = "새로"
+COLLECT_SINCE_DAYS = 14      # 신선도. 48시간이 아니다: 날짜 없는 글감이 가장 잘 됐다(리서치 2026-10-31)
+COLLECT_HOUR = 5             # tick이 이 시각(KST) 창에서 collect를 깨운다
 ZERO_DAYS_WARN = 2
 ZERO_DAYS_RED = 3
 

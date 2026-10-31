@@ -1,0 +1,39 @@
+# collect: 수집기 v1 (LLM 없음). 매일 05시 무렵 피드·앱스토어 '새로운 기능'을 긁어 글감 후보를 Notion '수집함'에 넣는다.
+# Variables NOTION_INBOX_DS(수집함 데이터 소스 id)가 없으면 collected/digest.md 만 아티팩트로 남긴다.
+# 깨우는 길: tick(05:00~05:29) → repository_dispatch 'collect'. GitHub 예약은 예비.
+name: collect
+
+on:
+  schedule:
+    - cron: '45 19 * * *'   # KST 04:45 (예비, 늦게 올 수 있음)
+  repository_dispatch:
+    types: [collect]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: collect
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - run: pip install -q -r requirements.txt
+      - env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_INBOX_DS: ${{ vars.NOTION_INBOX_DS }}
+        run: python -m publisher.cli collect
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: collected
+          path: collected/
+          retention-days: 14

@@ -45,7 +45,7 @@
 | `THREADS_TOKEN` | 장기 토큰(60일) | token-setup이 넣고, token-refresh가 매주 새로 고침 |
 | `GH_PAT` | 이 저장소 Secrets 쓰기 권한만 있는 토큰 | 운영자 |
 
-Variables(같은 화면의 **Variables** 탭)에는 `THREADS_USERNAME`(게시할 Threads 계정 이름, `@` 없이)을 넣는다. 선택: `NOTION_RUNLOG_DS`(런 로그 데이터 소스 id)를 넣으면 check가 런이 돌았는지도 본다. 비어 있으면 게시·verify·metrics·comments가 올리지 않고 멈춘다. 계정 이름은 코드에 두지 않는다.
+Variables(같은 화면의 **Variables** 탭)에는 `THREADS_USERNAME`(게시할 Threads 계정 이름, `@` 없이)을 넣는다. 선택: `NOTION_RUNLOG_DS`(런 로그 데이터 소스 id)를 넣으면 check가 런이 돌았는지도 본다. `NOTION_INBOX_DS`(수집함 데이터 소스 id, 칸: 제목·링크·출처·종류·게시일·수집일·요약·한국 중복·상태)를 넣으면 collect가 행을 만든다. 비어 있으면 게시·verify·metrics·comments가 올리지 않고 멈춘다. 계정 이름은 코드에 두지 않는다.
 
 토큰과 키는 채팅·코드·로그에 남기지 않는다.
 
@@ -54,6 +54,7 @@ Variables(같은 화면의 **Variables** 탭)에는 `THREADS_USERNAME`(게시할
 - `tick` 외부 cron이 15분마다 깨움. 한국 시각을 보고 kick(게시기)·check·metrics·comments를 깨운다 (publisher/tick.py)
 - `publish` 게시. 손으로 돌릴 때: `slot`(auto = 창이 닫힐 때까지 승인 글을 기다림) · `page_id`(시험할 캘린더 행) · `dry_run`(기본 켜짐: 컨테이너까지만 만들고 게시 안 함)
 - `check` 슬롯 뒤 확인: 아직 '승인'인 글이 있으면 알리고(창 안이면 한 번 더 깨움), Threads API가 죽었으면 빨간불. Variables `NOTION_RUNLOG_DS`가 있으면 오늘 아침·저녁 런의 런 로그 행이 있는지(심장박동)도 보고, posts/ 원장으로 게시 0일이 2일째면 경고·3일째면 빨간불
+- `collect` 수집기 v1(매일 05시, tick): 공식 발표·릴리스 노트·앱스토어 '새로운 기능'·매체·뉴스레터·실무자·HN·유튜브 피드(publisher/sources.py)에서 최근 14일 후보를 모아 Notion '수집함'에 넣는다(Variables `NOTION_INBOX_DS`). 없으면 collected/digest.md 아티팩트. 한국 피드(GeekNews·AI타임스·조코딩)에 같은 제품 이름이 있으면 '한국 중복: 있을 수 있음'. 점수·넓이 판정은 안 한다(저녁 글감 런·운영자 몫)
 - `verify` Threads 계정·한도·팔로워·키워드 검색 권한, Notion 칸 확인 (코드가 바뀌면 저절로)
 - `metrics` 매시(tick): 게시 뒤 24~30시간 글의 지표를 게시 로그에, 08~10시 첫 실행이 팔로워 하루 기록
 - `comments` 매시(tick): 내 최근 글 3개 답글 → Notion '댓글함' (내가 답함 표시)
