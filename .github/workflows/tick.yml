@@ -1,0 +1,40 @@
+# tick: 외부 cron(예: cron-job.org)이 15분마다 한 번 보내는 신호. LLM 없음.
+# 한국 시각을 보고 publish(깨우기)·check(확인)·metrics·comments를 repository_dispatch로 깨운다 (publisher/tick.py).
+# 외부 cron이 보내는 것: POST https://api.github.com/repos/<owner>/<repo>/dispatches  본문 {"event_type":"tick"}
+#   헤더 Authorization: Bearer <fine-grained PAT: 이 저장소 Contents 읽기·쓰기>, Accept: application/vnd.github+json
+#   (또는 POST .../actions/workflows/tick.yml/dispatches 본문 {"ref":"main"} — 이때 PAT 권한은 Actions 읽기·쓰기)
+name: tick
+
+on:
+  repository_dispatch:
+    types: [tick]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tick
+  cancel-in-progress: false
+
+jobs:
+  tick:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - run: pip install -q -r requirements.txt
+      - id: t
+        run: python -m publisher.cli tick
+      - name: 깨우기
+        if: steps.t.outputs.dispatch != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LIST: ${{ steps.t.outputs.dispatch }}
+        run: |
+          for t in $(echo "$LIST" | tr ',' ' '); do
+            gh api "repos/${{ github.repository }}/dispatches" -f event_type="$t" && echo "깨움: $t"
+          done

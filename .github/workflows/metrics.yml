@@ -1,10 +1,14 @@
-# 24시간 지표: 20분마다(매시 7·27·47분) 게시 뒤 24~30시간 된 글의 지표를 '게시 로그와 지표'에 채운다.
+# 24시간 지표: 게시 뒤 24~30시간 된 글의 지표를 '게시 로그와 지표'에 채운다. 같은 글은 한 번만 채운다.
 # 08시 대(KST) 실행은 팔로워 수를 data/followers.csv에 하루 한 번 적고 커밋한다.
+# 깨우는 길: tick.yml이 매시 repository_dispatch 'metrics'를 보낸다(외부 cron). GitHub 예약(매시 27분)은 예비.
+# Threads API 오류는 경고로만 남기고 초록으로 끝낸다. 빨간불(메일)은 check 워크플로가 하루 두 번 맡는다.
 name: metrics
 
 on:
   schedule:
-    - cron: '7,27,47 * * * *'   # GitHub 예약이 자주 빠져서 20분마다 (같은 글은 한 번만 채움)
+    - cron: '27 * * * *'   # 예비 (몇 시간 늦게 올 수 있음)
+  repository_dispatch:
+    types: [metrics]
   workflow_dispatch:
 
 permissions:

@@ -1,11 +1,14 @@
-# 댓글 수집: 내 최근 글 3개의 답글을 Notion '댓글함'에 넣는다. 댓글 런(09:40·23:10) 전에 끝나게
-# 09:05·09:15·09:25, 22:35·22:45·22:55(KST)에 깨운다. GitHub 예약이 빠질 때를 대비한 것이고, 같은 답글은 한 번만 넣는다.
+# 댓글 수집: 내 최근 글 3개의 답글을 Notion '댓글함'에 넣는다. 같은 답글은 한 번만 넣는다.
+# 깨우는 길: tick.yml이 매시 repository_dispatch 'comments'를 보낸다(외부 cron). GitHub 예약은 예비.
+# Threads API 오류는 경고로만 남기고 초록으로 끝낸다. 빨간불(메일)은 check 워크플로가 맡는다.
 name: comments
 
 on:
   schedule:
-    - cron: '5,15,25 0 * * *'     # KST 09:05 09:15 09:25
-    - cron: '35,45,55 13 * * *'   # KST 22:35 22:45 22:55
+    - cron: '5,25 0 * * *'      # KST 09:05 09:25 (예비)
+    - cron: '35,55 13 * * *'    # KST 22:35 22:55 (예비)
+  repository_dispatch:
+    types: [comments]
   workflow_dispatch:
   push:
     branches: [main]

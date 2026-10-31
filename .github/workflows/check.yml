@@ -1,0 +1,40 @@
+# check: 슬롯이 지난 뒤 아직 '승인'에 머문 글이 있는지, Threads API가 살아 있는지 본다. LLM 없음.
+# 문제가 있으면 빨간불로 끝나 GitHub 메일이 가고, 그 글 행에 '[게시기]' 댓글이 달린다.
+# 아직 게시 창 안이면(슬롯 뒤 90분까지) 게시기를 한 번 더 깨운다.
+# 깨우는 길: tick(08:45~09:14·22:15~22:44) → repository_dispatch 'check'. GitHub 예약은 예비(몇 시간 늦게 와도 확인은 된다).
+name: check
+
+on:
+  schedule:
+    - cron: '50 0 * * *'    # KST 09:50 (예비)
+    - cron: '25 14 * * *'   # KST 23:25 (예비)
+  repository_dispatch:
+    types: [check]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - run: pip install -q -r requirements.txt
+      - id: c
+        name: 승인 잔류·Threads API 확인
+        env:
+          THREADS_TOKEN: ${{ secrets.THREADS_TOKEN }}
+          THREADS_USERNAME: ${{ vars.THREADS_USERNAME }}
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+        run: python -m publisher.cli check
+      - name: 게시기 한 번 더 깨우기 (창 안일 때만)
+        if: always() && steps.c.outputs.rekick == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/${{ github.repository }}/dispatches" -f event_type=kick && echo "깨움 kick"

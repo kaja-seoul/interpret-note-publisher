@@ -1,32 +1,33 @@
 # 게시기: Notion 콘텐츠 캘린더의 '승인' 글을 Threads 공식 API로 올린다.
-# 08:07·21:37 + 0~9분에 게시한다. GitHub 예약 실행은 늦거나 빠지기도 해서(10/28 아침 07:47 실행이 안 옴)
-# 슬롯마다 20분 간격으로 5번 깨운다. 슬롯은 깬 시각으로 정한다(슬롯 55분 전 ~ 90분 뒤, 밖이면 그냥 끝).
-# 이미 올린 글은 캘린더 '게시됨'·게시 링크와 계정 최근 글 대조로 다시 올리지 않는다.
-# 예약 실행은 publisher/config.py의 LIVE가 True일 때만 올린다.
+# 08:07·21:37 + 0~9분에 게시한다. 슬롯은 깬 시각으로 정한다(슬롯 55분 전 ~ 90분 뒤, 밖이면 그냥 끝).
+# 깨우는 길(10/31 정리):
+#   1. 외부 cron → tick.yml → repository_dispatch 'kick' (슬롯 52분 전). 감시 모드로 돌아 창이 닫힐 때까지
+#      3분마다 '승인' 행을 다시 본다. 깨우기 한 번으로 늦은 승인(08:30 승인 → 08:33 게시)까지 받는다.
+#   2. kick/slot.txt를 바꿔 main에 올리면 깨어난다('live auto …' = 감시 모드 실제 게시, 'dry <슬롯> …' = 드라이런). 비상용.
+#   3. Actions의 Run workflow: slot 'auto' + dry_run 끔 = 감시 모드 실제 게시. page_id를 넣으면 그 행을 바로 올린다.
+#   4. GitHub 예약(cron)은 예비. 10/27~31 확인: 전부 2~6시간 늦게 와서 창 밖이었다. 창 안에 오면 감시 모드로 돈다.
+# 이미 올린 글은 캘린더 '게시됨'·게시 링크와 계정 최근 글 대조로 다시 올리지 않는다. 한 번에 한 실행만 돈다.
+# 예약·깨우기 실행은 publisher/config.py의 LIVE가 True일 때만 올린다.
 # dryrun/request.txt에 캘린더 행 ID를 적어 main에 올리면 그 행으로 드라이런만 돈다(게시 안 함).
-# kick/slot.txt를 바꿔 main에 올리면 깨어난다(10/28: GitHub 예약 실행이 거의 오지 않아 만든 길).
-#   'live auto …' → 예약 실행과 똑같이 슬롯을 시각으로 정해 실제 게시. Claude 예약 작업 '스레드 게시기 깨우기'가 쓴다.
-#   'dry 08:07 …' / 'dry 21:37 …' / 'dry auto …' → 같은 길로 드라이런만(게시 안 함). 시험용.
 # 끝나면 Pages를 저장소 상태(게시된 카드만)로 다시 공개해, 게시 안 된 카드는 내려간다.
 name: publish
 
 on:
   schedule:
-    - cron: '13,33,53 22 * * *'   # KST 07:13 07:33 07:53 → 08:07 슬롯
-    - cron: '13,33 23 * * *'      # KST 08:13 08:33 (늦은 실행 대비)
-    - cron: '43 11 * * *'         # KST 20:43 → 21:37 슬롯
-    - cron: '3,23,43 12 * * *'    # KST 21:03 21:23 21:43
-    - cron: '3 13 * * *'          # KST 22:03 (늦은 실행 대비)
+    - cron: '5,25 22 * * *'    # KST 07:05 07:25 → 08:07 슬롯 (예비. 몇 시간 늦게 오면 창 밖으로 끝남)
+    - cron: '35,55 11 * * *'   # KST 20:35 20:55 → 21:37 슬롯 (예비)
+  repository_dispatch:
+    types: [kick, kick-dry]    # kick = 감시 모드 실제 게시 (tick.yml·check.yml이 보냄), kick-dry = 드라이런 한 번
   push:
     branches: [main]
     paths: ['dryrun/request.txt', 'kick/slot.txt']
   workflow_dispatch:
     inputs:
       slot:
-        description: '슬롯'
+        description: "슬롯. auto = 지금 시각으로 정하고 창이 닫힐 때까지 승인 글을 기다림"
         type: choice
-        options: ['08:07', '21:37']
-        default: '08:07'
+        options: ['auto', '08:07', '21:37']
+        default: 'auto'
       page_id:
         description: '시험용: 이 캘린더 행만 올림 (비우면 평소대로 고름)'
         type: string
@@ -48,7 +49,7 @@ concurrency:
 jobs:
   prepare:
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 160   # 감시 모드는 창이 닫힐 때까지(최대 약 145분) 기다린다
     outputs:
       has_post: ${{ steps.p.outputs.has_post }}
       key: ${{ steps.p.outputs.key }}
@@ -67,14 +68,19 @@ jobs:
         name: 슬롯·대상·드라이런 정하기
         env:
           EVENT: ${{ github.event_name }}
-          SCHED: ${{ github.event.schedule }}
+          ACTION: ${{ github.event.action }}
           IN_SLOT: ${{ inputs.slot }}
           IN_PAGE: ${{ inputs.page_id }}
           IN_DRY: ${{ inputs.dry_run }}
         run: |
-          page=""; dry=false; manual=false
+          page=""; dry=false; manual=false; watch=false
           if [ "$EVENT" = "workflow_dispatch" ]; then
             slot="$IN_SLOT"; page="$IN_PAGE"; dry="$IN_DRY"; manual=true
+            if [ "$slot" = "auto" ] && [ "$dry" != "true" ] && [ -z "$page" ]; then manual=false; watch=true; fi
+          elif [ "$EVENT" = "repository_dispatch" ]; then
+            slot="auto"
+            if [ "$ACTION" = "kick-dry" ]; then dry=true; manual=true; else watch=true; fi
+            echo "깨우기(dispatch): $ACTION"
           elif [ "$EVENT" = "push" ]; then
             # 이번 push에서 바뀐 파일: 마지막 커밋 diff + (있으면) push 정보의 파일 목록
             touched="$(git diff --name-only HEAD~1 HEAD 2>/dev/null | tr '\n' ' ') $(python3 -c "import json,os; e=json.load(open(os.environ['GITHUB_EVENT_PATH'])); print(' '.join(f for c in e.get('commits',[]) for f in c.get('added',[])+c.get('modified',[])))" 2>/dev/null)"
@@ -83,16 +89,16 @@ jobs:
               if [ "$kmode" = "dry" ]; then
                 slot="${kslot:-auto}"; dry=true; manual=true
               else
-                slot="auto"; dry=false; manual=false   # 실제 게시는 늘 시각으로 슬롯을 정한다
+                slot="auto"; dry=false; manual=false; watch=true   # 실제 게시는 늘 시각으로 슬롯을 정하고 창이 닫힐 때까지 본다
               fi
               echo "깨우기: $(head -c 200 kick/slot.txt)"
             else
               slot="08:07"; page="$(tr -d ' \r\n' < dryrun/request.txt)"; dry=true; manual=true
             fi
-          else slot="auto"; fi
-          { echo "slot=$slot"; echo "page=$page"; echo "dry=$dry"; echo "manual=$manual"; } >> "$GITHUB_OUTPUT"
-          echo "::notice title=실행 방식::$EVENT · 슬롯 $slot · 드라이런 $dry$([ -n "$page" ] && echo ' · 지정 행 있음')"
-          echo "슬롯 $slot · 대상 ${page:-자동} · 드라이런 $dry"
+          else slot="auto"; watch=true; fi   # schedule(예비): 창 안에 왔으면 감시 모드
+          { echo "slot=$slot"; echo "page=$page"; echo "dry=$dry"; echo "manual=$manual"; echo "watch=$watch"; } >> "$GITHUB_OUTPUT"
+          echo "::notice title=실행 방식::$EVENT · 슬롯 $slot · 드라이런 $dry · 감시 $watch$([ -n "$page" ] && echo ' · 지정 행 있음')"
+          echo "슬롯 $slot · 대상 ${page:-자동} · 드라이런 $dry · 감시 $watch"
       - id: p
         name: 올릴 글 고르기 · 형식 검사 · 카드 받기
         env:
@@ -100,10 +106,12 @@ jobs:
           SLOT: ${{ steps.s.outputs.slot }}
           PAGE_ID: ${{ steps.s.outputs.page }}
           DRY: ${{ steps.s.outputs.dry }}
+          WATCH: ${{ steps.s.outputs.watch }}
         run: |
           args=(--slot "$SLOT")
           if [ -n "$PAGE_ID" ]; then args+=(--page-id "$PAGE_ID"); fi
           if [ "$DRY" = "true" ]; then args+=(--dry-run); fi
+          if [ "$WATCH" = "true" ]; then args+=(--watch); fi
           python -m publisher.cli prepare "${args[@]}"
       - name: 준비물 넘기기
         if: steps.p.outputs.has_post == 'true'
