@@ -116,3 +116,10 @@ class RunTests(unittest.TestCase):
         p = nt.created[0]
         self.assertEqual(p[C.INBOX_P_STATUS]["select"]["name"], "새로")
         self.assertEqual(p[C.INBOX_P_COLLECTED]["date"]["start"], "2026-10-31")
+
+
+class CapTests(unittest.TestCase):
+    def test_newest_cap(self):
+        items = collect.parse_feed(RSS, "s", "k")  # 2 dated + 1 undated
+        out = collect.newest(items, 1)
+        self.assertEqual([i.title for i in out], ["ChatGPT adds Lock chats with a PIN", "No date item"])

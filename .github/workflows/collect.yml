@@ -33,6 +33,12 @@ jobs:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_INBOX_DS: ${{ github.ref == 'refs/heads/main' && vars.NOTION_INBOX_DS || '' }}   # main에서만 수집함에 쓴다
         run: python -m publisher.cli collect
+      - name: 요약 (실행 화면·로그에 앞부분만)
+        if: always()
+        run: |
+          if [ -f collected/digest.md ]; then
+            head -60 collected/digest.md | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
       - uses: actions/upload-artifact@v7
         if: always()
         with:

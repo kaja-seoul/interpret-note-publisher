@@ -208,8 +208,15 @@ def existing_links(nt: Notion, days: int = 45) -> set[str]:
 
 
 # ---- 실행 ----
+def newest(items: list[Item], n: int) -> list[Item]:
+    """날짜 있는 것은 최신순으로 n건, 날짜 없는 것은 그대로(피드 순서) n건."""
+    dated = sorted([i for i in items if i.published], key=lambda i: i.published, reverse=True)[:n]
+    undated = [i for i in items if not i.published][:n]
+    return dated + undated
+
+
 def run(sources: list[dict], now: datetime, nt: Notion | None, out_dir: Path, log=print,
-        since_days: int = 14, fetch_fn=fetch) -> dict:
+        since_days: int = 14, fetch_fn=fetch, max_per_source: int = C.COLLECT_MAX_PER_SOURCE) -> dict:
     """sources: [{name, url, type: rss|appstore|korean, kind}]. korean 타입은 중복 확인용이라 후보에 넣지 않는다."""
     items: list[Item] = []
     korean_titles: list[str] = []
@@ -225,8 +232,9 @@ def run(sources: list[dict], now: datetime, nt: Notion | None, out_dir: Path, lo
                 korean_titles += [i.title for i in fresh(got, now, 3)]
                 log(f"한국 확인용 {s['name']}: {len(got)}건")
             else:
-                items += fresh(got, now, since_days)
-                log(f"{s['name']}: {len(got)}건 → 최근 {since_days}일 {len(fresh(got, now, since_days))}건")
+                keep = newest(fresh(got, now, since_days), max_per_source)
+                items += keep
+                log(f"{s['name']}: {len(got)}건 → 최근 {since_days}일 {len(fresh(got, now, since_days))}건 → {len(keep)}건")
         except Exception as e:  # 한 소스가 죽어도 나머지는 간다
             failed.append(f"{s['name']}: {str(e)[:120]}")
             log(f"실패 {s['name']}: {str(e)[:120]}")

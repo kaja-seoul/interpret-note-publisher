@@ -80,6 +80,7 @@ INBOX_P_STATUS = "상태"
 INBOX_S_NEW = "새로"
 COLLECT_SINCE_DAYS = 14      # 신선도. 48시간이 아니다: 날짜 없는 글감이 가장 잘 됐다(리서치 2026-10-31)
 COLLECT_HOUR = 5             # tick이 이 시각(KST) 창에서 collect를 깨운다
+COLLECT_MAX_PER_SOURCE = 12  # 소스마다 최신 N건까지만(첫 실행에 수백 건이 한꺼번에 들어가지 않게)
 ZERO_DAYS_WARN = 2
 ZERO_DAYS_RED = 3
 
