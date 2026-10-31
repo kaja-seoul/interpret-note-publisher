@@ -9,6 +9,8 @@ on:
   repository_dispatch:
     types: [collect]
   workflow_dispatch:
+  push:
+    paths: ['publisher/collect.py', 'publisher/sources.py', '.github/workflows/collect.yml']   # 코드가 바뀌면 시험 삼아 한 번 (브랜치에선 digest만)
 
 permissions:
   contents: read
@@ -29,7 +31,7 @@ jobs:
       - run: pip install -q -r requirements.txt
       - env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
-          NOTION_INBOX_DS: ${{ vars.NOTION_INBOX_DS }}
+          NOTION_INBOX_DS: ${{ github.ref == 'refs/heads/main' && vars.NOTION_INBOX_DS || '' }}   # main에서만 수집함에 쓴다
         run: python -m publisher.cli collect
       - uses: actions/upload-artifact@v7
         if: always()
