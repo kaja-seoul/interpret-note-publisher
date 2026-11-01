@@ -27,6 +27,7 @@ jobs:
       - name: 연결 확인
         env:
           THREADS_TOKEN: ${{ secrets.THREADS_TOKEN }}
+          THREADS_USERNAME: ${{ vars.THREADS_USERNAME }}
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           GH_PAT: ${{ secrets.GH_PAT }}
           THREADS_APP_ID: ${{ secrets.THREADS_APP_ID }}

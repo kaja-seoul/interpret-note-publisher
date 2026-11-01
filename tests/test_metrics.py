@@ -38,13 +38,13 @@ class FakeThreads:
     user_id = "me"
 
     def me(self):
-        return {"id": "9", "username": "interpret.note"}
+        return {"id": "9", "username": "example.account"}
 
     def followers_count(self):
         return 30
 
     def my_posts(self, max_pages=4):
-        return [{"id": "111", "permalink": "https://www.threads.com/@interpret.note/post/De-687HGP1t"}]
+        return [{"id": "111", "permalink": "https://www.threads.com/@example.account/post/De-687HGP1t"}]
 
     def media_insights(self, mid):
         return {"views": 500, "likes": 9, "replies": 3, "reposts": 2, "quotes": 1, "shares": 4}
@@ -52,7 +52,7 @@ class FakeThreads:
     def replies(self, mid):
         return [
             {"username": "someone", "is_reply_owned_by_me": False, "timestamp": "2026-10-27T05:00:00+0000"},
-            {"username": "interpret.note", "is_reply_owned_by_me": True, "timestamp": "2026-10-27T03:44:00+0000"},
+            {"username": "example.account", "is_reply_owned_by_me": True, "timestamp": "2026-10-27T03:44:00+0000"},
             {"username": "late", "is_reply_owned_by_me": False, "timestamp": "2026-10-28T09:00:00+0000"},
         ]
 
@@ -69,7 +69,7 @@ class MetricsTests(unittest.TestCase):
 
     def test_fill_after_24h_from_permalink(self):
         nt = FakeNotion([logrow("a", "#002", "2026-10-27T03:43:00.000+00:00",
-                                "https://www.threads.com/@interpret.note/post/De-687HGP1t", before=17)])
+                                "https://www.threads.com/@example.account/post/De-687HGP1t", before=17)])
         now = datetime(2026, 10, 28, 12, 47, tzinfo=C.KST)  # 24.07시간 뒤
         res = metrics.run(nt, FakeThreads(), now, log=lambda *a: None)
         u = nt.updates["a"]

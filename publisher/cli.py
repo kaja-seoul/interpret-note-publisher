@@ -2,10 +2,14 @@
 
   python -m publisher.cli prepare --slot 08:07 [--page-id ID] [--now]
   python -m publisher.cli post --key KEY --pages-url URL [--dry-run] [--now]
-  python -m publisher.cli build-site
+  python -m publisher.cli build-site        # Pages 내용. Variables NOTES_PAGE=true면 notes/ 모음 페이지도 만든다
   python -m publisher.cli verify            # 토큰·Notion 연결 확인 (값은 안 찍음)
+  python -m publisher.cli check             # 슬롯이 지났는데 '승인'인 글, Threads API 상태 (문제면 빨간불)
+  python -m publisher.cli tick              # 외부 cron의 tick: 지금 깨울 워크플로 목록을 출력에 남김
+  python -m publisher.cli collect           # 수집기 v1: 피드·앱스토어 → 글감 후보 → Notion 수집함(또는 collected/digest.md)
 
 prepare: 캘린더에서 올릴 글 하나를 고르고 형식 검사, 카드를 staged/<key>/에 받는다.
+         --watch면 게시 창(슬롯 55분 전 ~ 90분 뒤)이 닫힐 때까지 3분마다 다시 본다. 깨우기 한 번으로 늦은 승인까지 받는다.
 post:    목표 시각까지 기다렸다가 게시 → 첫 답글 → 캘린더·게시 로그 기록 → posts/<key>/ 원장.
 알릴 일이 생기면 그 글 행에 Notion 댓글을 달고 notices.txt에 적는다. 워크플로가 마지막에 빨간불로 끝내 GitHub 메일이 간다.
 """
@@ -27,7 +31,7 @@ import requests
 
 from . import checks, config as C
 from .notion import Notion, date_start, files_of, number_of, rt, select_of, text_of, url_of
-from .threads import Threads
+from .threads import Threads, ThreadsError
 
 ROOT = Path(__file__).resolve().parent.parent
 STAGED = ROOT / "staged"
@@ -61,8 +65,16 @@ def summary(md: str) -> None:
             f.write(md + "\n")
 
 
+_DEDUPE: set[tuple[str, str]] | None = None   # 감시 모드에서만 켠다: 같은 행에 같은 알림을 몇 분마다 반복하지 않게
+
+
 def notice(nt: Notion | None, page_id: str | None, msg: str) -> None:
     """운영자에게 알림: Notion 행 댓글 + notices.txt (워크플로가 빨간불로 끝냄)."""
+    if _DEDUPE is not None:
+        key = (page_id or "", msg.strip())
+        if key in _DEDUPE:
+            return
+        _DEDUPE.add(key)
     log(f"[알림] {msg}")
     with open(NOTICES, "a", encoding="utf-8") as f:
         f.write(msg.strip() + "\n\n")
@@ -124,6 +136,41 @@ def snapshot(page: dict) -> str:
         "|".join(f["name"] for f in cards_ordered(page)),
     ]
     return hashlib.sha256("\n\0".join(parts).encode()).hexdigest()
+
+
+def topic_of(nt: Notion | None, page: dict) -> str:
+    """'토픽' 칸의 태그 1개. 규칙(1~50자, '.'·'&' 없음)에 어긋나면 알리고 태그 없이 올린다."""
+    tag = (select_of(page, C.P_TOPIC) or text_of(page, C.P_TOPIC)).strip().lstrip("#")
+    if not tag:
+        return ""
+    if len(tag) > 50 or "." in tag or "&" in tag:
+        notice(nt, page["id"], f"토픽 태그 '{tag}'는 규칙(1~50자, '.'·'&' 금지)에 어긋나 태그 없이 올린다.")
+        return ""
+    return tag
+
+
+def last_post_day():
+    """posts/ 원장에서 마지막으로 올린 날(KST date). 없으면 None."""
+    days = []
+    for p in POSTS.glob("*/post.json"):
+        try:
+            d = json.loads(p.read_text(encoding="utf-8"))
+            if d.get("media_id") and d.get("posted_at"):
+                days.append(datetime.fromisoformat(d["posted_at"]).astimezone(C.KST).date())
+        except (ValueError, KeyError):
+            pass
+    return max(days) if days else None
+
+
+def posted_slot(day, slot: str) -> bool:
+    """이 날 이 슬롯 글을 이미 올렸나 (posts/ 원장 기준)."""
+    for p in POSTS.glob(f"{day:%Y%m%d}-{slot.replace(':', '')}-*/post.json"):
+        try:
+            if json.loads(p.read_text(encoding="utf-8")).get("media_id"):
+                return True
+        except ValueError:
+            pass
+    return False
 
 
 def posted_today(day) -> int:
@@ -208,6 +255,8 @@ def pick(nt: Notion, slot: str, now: datetime, page_id: str | None, dry_run: boo
 
 
 def cmd_prepare(a) -> int:
+    global _DEDUPE
+    _DEDUPE = None
     NOTICES.unlink(missing_ok=True)
     nt = notion()
     now = now_kst()
@@ -225,6 +274,8 @@ def cmd_prepare(a) -> int:
         gh_output(has_post="false")
         summary(f"### {now:%m/%d} {slot}: 예약 게시 꺼짐 (운영자가 넘기기 전)")
         return 0
+    if getattr(a, "watch", False) and not a.page_id:
+        return watch(nt, slot, a)
     page, slot_dt = pick(nt, slot, now, a.page_id, a.dry_run)
     if not page:
         log("올릴 글 없음.")
@@ -232,7 +283,47 @@ def cmd_prepare(a) -> int:
         gh_output(has_post="false")
         summary(f"### {now:%m/%d} {slot}: 올릴 승인 글 없음")
         return 0
+    return stage(nt, page, slot, slot_dt, now, a)
 
+
+def watch(nt: Notion, slot: str, a) -> int:
+    """감시 모드: 게시 창이 닫힐 때까지 몇 분마다 '승인' 행을 다시 본다. 깨우기 한 번으로 늦은 승인까지 받는다."""
+    global _DEDUPE
+    _DEDUPE = set()
+    h, m = C.SLOTS[slot]
+    start = now_kst()
+    slot_dt = start.replace(hour=h, minute=m, second=0, microsecond=0)
+    deadline = slot_dt + timedelta(minutes=C.LATE_LIMIT_MIN)
+    if posted_slot(start.date(), slot):
+        log(f"{start:%m/%d} {slot} 슬롯은 이미 올렸다. 끝.")
+        _note(True, f"{start:%m/%d} {slot} 슬롯: 이미 게시됨 · 할 일 없음")
+        gh_output(has_post="false")
+        return 0
+    log(f"감시 시작 {start:%H:%M:%S} · {slot} 슬롯 · {deadline:%H:%M}까지 {C.WATCH_INTERVAL_SEC}초마다 '승인' 행을 본다")
+    skipped: dict[str, str] = {}   # 형식 탈락한 행: 내용이 바뀔 때까지 다시 보지 않는다
+    polls = 0
+    while True:
+        now = now_kst()
+        page, sdt = pick(nt, slot, now, None, a.dry_run)
+        polls += 1
+        if page:
+            snap = snapshot(page)
+            if skipped.get(page["id"]) != snap:
+                if stage(nt, page, slot, sdt, now, a) == 0:
+                    return 0
+                skipped[page["id"]] = snap
+                log("탈락한 행은 내용이 바뀔 때까지 건너뛴다. 계속 감시한다.")
+        if now >= deadline:
+            log(f"{now:%H:%M} 게시 창 끝. 올릴 '승인' 글 없음 ({polls}번 봄).")
+            _note(True, f"{now:%m/%d} {slot} 슬롯: 창이 끝날 때까지 올릴 '승인' 글 없음 ({polls}번 확인)")
+            gh_output(has_post="false")
+            summary(f"### {now:%m/%d} {slot}: 창이 끝날 때까지 올릴 승인 글 없음 ({polls}번 확인)")
+            return 0
+        time.sleep(C.WATCH_INTERVAL_SEC)
+
+
+def stage(nt: Notion, page: dict, slot: str, slot_dt: datetime | None, now: datetime, a) -> int:
+    """고른 글을 형식 검사하고 카드를 받아 staged/<key>/에 둔다. 0이면 has_post=true."""
     pid = page["id"]
     title = text_of(page, C.P_TITLE)
     if posted_today(now.date()) >= C.DAILY_MAX:
@@ -303,6 +394,7 @@ def cmd_prepare(a) -> int:
         "reply": reply,
         "cards": saved,
         "source_url": url_of(page, C.P_SOURCE),
+        "topic": topic_of(nt, page),
         "target": target.isoformat(),
         "prepared_at": now.isoformat(),
         "snapshot": snapshot(page),
@@ -338,6 +430,12 @@ def cmd_build_site(a) -> int:
                     shutil.copy2(p, site / "c" / d.name / p.name)
     n = sum(1 for _ in (site / "c").rglob("card*"))
     log(f"_site 준비: 카드 {n}장")
+    if os.environ.get("NOTES_PAGE", "").strip().lower() in ("1", "true", "yes"):
+        from . import archive
+        posts = archive.load_posts(POSTS) if POSTS.exists() else []
+        (site / "notes").mkdir(exist_ok=True)
+        (site / "notes" / "index.html").write_text(archive.render(posts, site_root=".."), encoding="utf-8")
+        log(f"모음 페이지(notes/): 글 {len(posts)}개")
     return 0
 
 
@@ -396,7 +494,7 @@ def cmd_post(a) -> int:
         summary(f"### 올리지 않음: 준비 뒤 상태가 '{select_of(page, C.P_STATUS)}'로 바뀜")
         return 0
     if snapshot(page) != meta["snapshot"]:
-        notice(nt, pid, "준비한 뒤 본문·첫 답글·카드가 바뀌어 이번엔 올리지 않았다. 다음 실행(20분 간격, 슬롯 뒤 90분까지)에서 다시 검사해 올린다.")
+        notice(nt, pid, "준비한 뒤 본문·첫 답글·카드가 바뀌어 이번엔 올리지 않았다. 같은 창의 다음 깨우기(슬롯 뒤 90분까지)가 다시 검사해 올리고, 없으면 다음 슬롯에 올린다.")
         return 0
 
     base = a.pages_url.rstrip("/") + f"/c/{meta['key']}/"
@@ -406,8 +504,7 @@ def cmd_post(a) -> int:
 
     me = th.me()
     username = me.get("username", "")
-    if username != C.ACCOUNT:
-        raise RuntimeError(f"토큰 계정이 @{username}다. @{C.ACCOUNT}에만 올린다.")
+    C.check_account(username)
     th.user_id = me["id"]
 
     followers_before = th.followers_count()
@@ -420,7 +517,7 @@ def cmd_post(a) -> int:
             break
 
     if media_id is None:
-        cid = th.create_post_container(meta["text"], urls)
+        cid = th.create_post_container(meta["text"], urls, topic_tag=meta.get("topic") or None)
         th.wait_ready(cid)
         if dry:
             kind = "TEXT" if not urls else ("IMAGE" if len(urls) == 1 else "CAROUSEL")
@@ -519,9 +616,18 @@ def cmd_post(a) -> int:
 
 
 # ---------- comments ----------
+def _warn(msg: str) -> None:
+    print(f"::warning title=게시기 경고::{msg}", flush=True)
+    summary(f"- ⚠️ {msg}")
+
+
 def cmd_comments(a) -> int:
     from . import comments
-    res = comments.run(notion(), threads(), now_kst(), log)
+    try:
+        res = comments.run(notion(), threads(), now_kst(), log)
+    except ThreadsError as e:
+        _warn(f"Threads API 호출 실패로 댓글을 못 모았다 (check 워크플로가 알린다): {e}")
+        return 0
     _note(True, f"댓글 수집: 최근 글 {res['posts']}개 · 외부 답글 {res['total_external']}개 · 새로 넣음 {res['new']} · 고침 {res['updated']}")
     return 0
 
@@ -529,7 +635,12 @@ def cmd_comments(a) -> int:
 # ---------- metrics ----------
 def cmd_metrics(a) -> int:
     from . import metrics
-    res = metrics.run(notion(), threads(), now_kst(), log)
+    try:
+        res = metrics.run(notion(), threads(), now_kst(), log)
+    except ThreadsError as e:
+        _warn(f"Threads API 호출 실패로 지표를 못 쟀다 (check 워크플로가 알린다): {e}")
+        gh_output(snapshot="false")
+        return 0
     for line in res["filled"]:
         _note(True, "24시간 지표 채움 · " + line)
     for line in res["daily"]:
@@ -542,6 +653,106 @@ def cmd_metrics(a) -> int:
     return 0
 
 
+# ---------- check ----------
+def find_stuck(nt: Notion, now: datetime) -> list[tuple[dict, datetime, bool]]:
+    """아직 '승인'인데 예정 슬롯 시각이 지난 행. (행, 슬롯 시각, 아직 게시 창 안인가)."""
+    out = []
+    for r in nt.query(C.CALENDAR_DS, {"property": C.P_STATUS, "status": {"equals": C.S_APPROVED}}):
+        if url_of(r, C.P_LINK):
+            continue
+        when, _ = row_when(r)
+        if when is None or when > now:
+            continue
+        if now - when > timedelta(hours=C.OVERDUE_FRESH_HOURS):
+            continue  # 게시기가 다음 실행에서 '보류'로 옮긴다
+        out.append((r, when, now <= when + timedelta(minutes=C.LATE_LIMIT_MIN)))
+    return out
+
+
+def cmd_check(a) -> int:
+    """슬롯이 지난 뒤 '승인'에 머문 글과 Threads API 상태를 본다. 문제면 1(빨간불·메일)."""
+    NOTICES.unlink(missing_ok=True)
+    now = now_kst()
+    ok, rekick = True, False
+    try:
+        me = threads().me()
+        C.check_account(me.get("username"))
+        _note(True, f"Threads API 정상 · @{me.get('username')}")
+    except Exception as e:
+        ok = False
+        _note(False, f"Threads API 호출 실패: {e} → 게시·지표·댓글 수집이 모두 멈춘다. Meta 개발자 화면에서 앱 상태·테스터 권한·토큰을 확인하라")
+    nt = notion()
+    try:
+        stuck = find_stuck(nt, now)
+    except Exception as e:
+        ok, stuck = False, []
+        _note(False, f"Notion 읽기 실패: {e}")
+    for r, when, in_window in stuck:
+        title = text_of(r, C.P_TITLE)
+        if in_window:
+            rekick = True
+            _note(True, f"'{title}' ({when:%m/%d %H:%M} 슬롯)이 아직 '승인'이다. 창 안이라 게시기를 한 번 더 깨운다")
+        else:
+            ok = False
+            notice(nt, r["id"], f"{when:%m/%d %H:%M} 슬롯 창이 끝났는데 아직 '승인'이다. 게시기가 안 깼거나 실패했다. "
+                                "그대로 두면 다음 슬롯에 올라가고, 바로 올리려면 Actions의 publish를 page_id로 수동 실행(dry_run 끄기)한다")
+    if not stuck:
+        _note(True, f"{now:%m/%d %H:%M} 남은 '승인' 글 없음")
+    # 심장박동: 오늘 그 런이 돌았나 (런 로그 DB가 설정돼 있을 때만)
+    if C.RUNLOG_DS:
+        job = C.RUNLOG_MORNING_JOB if now.hour < 12 else C.RUNLOG_EVENING_JOB
+        try:
+            if run_logged(nt, now.date(), job):
+                _note(True, f"{now:%m/%d} {job} 런 로그 있음")
+            else:
+                ok = False
+                _note(False, f"{now:%m/%d} {job}이 돌지 않았다(런 로그 없음). 사용량 한도나 오류다. 오늘 글은 쉬거나 '보류' 행을 승인한다")
+        except Exception as e:
+            _note(False, f"런 로그 읽기 실패: {e}")
+    # 글 0일 연속 (posts/ 원장)
+    last = last_post_day()
+    if last is not None:
+        gap = (now.date() - last).days
+        if gap >= C.ZERO_DAYS_RED:
+            ok = False
+            _note(False, f"{last:%m/%d} 뒤로 {gap}일째 게시 0. 글감 회의가 필요하다(보고서 4절 소재 파이프라인)")
+        elif gap >= C.ZERO_DAYS_WARN:
+            _warn(f"{last:%m/%d} 뒤로 {gap}일째 게시 0")
+    gh_output(rekick="true" if rekick else "false", stuck="true" if stuck else "false")
+    return 0 if ok else 1
+
+
+def run_logged(nt: Notion, day, job: str) -> bool:
+    rows = nt.query(C.RUNLOG_DS, {"and": [
+        {"property": C.RUNLOG_P_DATE, "date": {"equals": day.isoformat()}},
+        {"property": C.RUNLOG_P_JOB, "select": {"equals": job}},
+    ]})
+    return bool(rows)
+
+
+# ---------- tick ----------
+def cmd_tick(a) -> int:
+    from .tick import decide
+    now = now_kst()
+    jobs = decide(now)
+    log(f"{now:%m/%d %H:%M} KST → 깨울 것: {', '.join(jobs) or '없음'}")
+    gh_output(dispatch=",".join(jobs))
+    return 0
+
+
+# ---------- collect ----------
+def cmd_collect(a) -> int:
+    """수집기 v1: 피드·앱스토어 → 글감 후보 → Notion 수집함(없으면 collected/digest.md)."""
+    from . import collect
+    from .sources import SOURCES
+    nt = notion() if C.INBOX_DS else None
+    res = collect.run(SOURCES, now_kst(), nt, ROOT / "collected", log, since_days=C.COLLECT_SINCE_DAYS)
+    _note(True, f"수집: 후보 {res['items']}건 · 수집함에 넣음 {res['created']}건 · 한국 확인 제목 {res['korean_titles']}개 · 실패 소스 {len(res['failed'])}개")
+    for f in res["failed"]:
+        _warn(f"소스 실패: {f}")
+    return 0
+
+
 # ---------- selftest ----------
 def cmd_selftest(a) -> int:
     """Threads가 GitHub Pages 이미지를 가져가는지 본다. 캐러셀 컨테이너까지만 만들고 게시하지 않는다."""
@@ -550,8 +761,10 @@ def cmd_selftest(a) -> int:
     wait_public(urls)
     th = threads()
     me = th.me()
-    if me.get("username") != C.ACCOUNT:
-        _note(False, f"토큰 계정이 @{me.get('username')}다")
+    try:
+        C.check_account(me.get("username"))
+    except RuntimeError as e:
+        _note(False, str(e))
         return 1
     th.user_id = me["id"]
     try:
@@ -593,9 +806,12 @@ def cmd_verify(a) -> int:
             th = threads()
             me = th.me()
             th.user_id = me["id"]
-            good = me.get("username") == C.ACCOUNT
-            ok &= good
-            _note(good, f"Threads 계정 @{me.get('username')}" + ("" if good else f" (게시기는 @{C.ACCOUNT}에만 올린다)"))
+            try:
+                C.check_account(me.get("username"))
+                _note(True, f"Threads 계정 @{me.get('username')}")
+            except RuntimeError as e:
+                ok = False
+                _note(False, f"Threads 계정 @{me.get('username')} · {e}")
             lim = (th.publishing_limit().get("data") or [{}])[0]
             used = lim.get("quota_usage")
             total = (lim.get("config") or {}).get("quota_total")
@@ -653,6 +869,7 @@ def main(argv=None) -> int:
     p.add_argument("--page-id", default="")
     p.add_argument("--now", action="store_true")
     p.add_argument("--dry-run", action="store_true")
+    p.add_argument("--watch", action="store_true", help="게시 창이 닫힐 때까지 승인 글을 기다린다")
     p = sub.add_parser("post")
     p.add_argument("--key", required=True)
     p.add_argument("--pages-url", required=True)
@@ -662,13 +879,17 @@ def main(argv=None) -> int:
     sub.add_parser("verify")
     sub.add_parser("metrics")
     sub.add_parser("comments")
+    sub.add_parser("check")
+    sub.add_parser("tick")
+    sub.add_parser("collect")
     p = sub.add_parser("selftest")
     p.add_argument("--pages-url", required=True)
     a = ap.parse_args(argv)
     fn = {"prepare": cmd_prepare, "post": cmd_post, "build-site": cmd_build_site, "verify": cmd_verify,
-          "selftest": cmd_selftest, "metrics": cmd_metrics, "comments": cmd_comments}[a.cmd]
+          "selftest": cmd_selftest, "metrics": cmd_metrics, "comments": cmd_comments,
+          "check": cmd_check, "tick": cmd_tick, "collect": cmd_collect}[a.cmd]
     rc = fn(a)
-    if a.cmd in ("prepare", "post"):
+    if a.cmd in ("prepare", "post", "check"):
         gh_output(notices="true" if NOTICES.exists() and NOTICES.read_text(encoding="utf-8").strip() else "false")
     return rc
 

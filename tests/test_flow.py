@@ -26,8 +26,8 @@ def cal_row():
             "본문": {"type": "rich_text", "rich_text": [{"plain_text": N002}]},
             "첫 답글": {"type": "rich_text", "rich_text": [{"plain_text": "통역 노트 #003 · 출처 ↓\n\nhttps://example.com/a"}]},
             "카드": {"type": "files", "files": [
-                {"name": "실밸통역사_통역노트003_2of2.png", "type": "file", "file": {"url": "https://n/2"}},
-                {"name": "실밸통역사_통역노트003_1of2.png", "type": "file", "file": {"url": "https://n/1"}},
+                {"name": "예시계정_통역노트003_2of2.png", "type": "file", "file": {"url": "https://n/2"}},
+                {"name": "예시계정_통역노트003_1of2.png", "type": "file", "file": {"url": "https://n/1"}},
             ]},
             "연재": {"type": "select", "select": {"name": "통역 노트"}},
             "번호": {"type": "number", "number": 3},
@@ -62,10 +62,10 @@ class FakeNotion:
 class FakeThreads:
     def __init__(self):
         self.user_id = "me"
-        self.published, self.containers = [], []
+        self.published, self.containers, self.topics = [], [], []
 
     def me(self):
-        return {"id": "99", "username": "interpret.note"}
+        return {"id": "99", "username": "example.account"}
 
     def followers_count(self):
         return 42
@@ -73,8 +73,9 @@ class FakeThreads:
     def recent_posts(self, limit=10):
         return [{"id": m, "text": t} for m, t in self.published]
 
-    def create_post_container(self, text, urls, alt_texts=None):
+    def create_post_container(self, text, urls, alt_texts=None, topic_tag=None):
         self.containers.append(("post", text, urls))
+        self.topics.append(topic_tag)
         return "c1"
 
     def create_reply_container(self, text, reply_to):
@@ -92,7 +93,7 @@ class FakeThreads:
         return mid
 
     def permalink(self, mid):
-        return "https://www.threads.com/@interpret.note/post/ABC"
+        return "https://www.threads.com/@example.account/post/ABC"
 
     def replies(self, mid):
         return []
@@ -164,6 +165,26 @@ class FlowTests(unittest.TestCase):
         led = json.loads((self.tmp / "posts" / key / "post.json").read_text())
         self.assertEqual(led["media_id"], "m1")
         self.assertFalse((self.tmp / "notices.txt").exists())
+
+    def test_topic_tag_from_calendar(self):
+        self.nt.row["properties"]["토픽"] = {"type": "select", "select": {"name": "AI"}}
+        key = self.prepare()
+        meta = json.loads((self.tmp / "staged" / key / "post.json").read_text())
+        self.assertEqual(meta["topic"], "AI")
+        self.assertEqual(self.run_cli("post", "--key", key, "--pages-url", "https://o.github.io/r/"), 0)
+        self.assertEqual(self.th.topics, ["AI"])
+
+    def test_bad_topic_tag_is_dropped_with_notice(self):
+        self.nt.row["properties"]["토픽"] = {"type": "select", "select": {"name": "a.b&c"}}
+        key = self.prepare()
+        meta = json.loads((self.tmp / "staged" / key / "post.json").read_text())
+        self.assertEqual(meta["topic"], "")
+        self.assertTrue((self.tmp / "notices.txt").exists())
+
+    def test_no_topic_by_default(self):
+        key = self.prepare()
+        self.assertEqual(self.run_cli("post", "--key", key, "--pages-url", "https://o.github.io/r/"), 0)
+        self.assertEqual(self.th.topics, [None])
 
     def test_second_wake_in_same_slot_does_not_repost(self):
         """깨우기가 여러 번 와도 한 슬롯에 한 번만 올라간다."""

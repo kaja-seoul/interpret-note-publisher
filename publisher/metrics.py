@@ -74,8 +74,7 @@ def save_snapshot(day: date, at: datetime, followers: int) -> bool:
 # ---- 실행 ----
 def run(nt: Notion, th, now: datetime, log=print) -> dict:
     me = th.me()
-    if me.get("username") != C.ACCOUNT:
-        raise RuntimeError(f"토큰 계정이 @{me.get('username')}다")
+    C.check_account(me.get("username"))
     th.user_id = me["id"]
     followers = th.followers_count()
     result = {"filled": [], "late": [], "daily": [], "snapshot": None}
