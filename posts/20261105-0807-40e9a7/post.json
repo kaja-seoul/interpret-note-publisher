@@ -1,0 +1,23 @@
+{
+  "key": "20261105-0807-40e9a7",
+  "title": "통역 노트 #004 · 챗GPT 기억 켰으면, 내 정보 쌓여 있음",
+  "series": "통역 노트",
+  "number": 4,
+  "variable": "B",
+  "slot": "08:07",
+  "first_line_len": 23,
+  "text": "챗GPT 기억 켰으면, 내 정보 쌓여 있음\n챗GPT에 \"What do you remember about me?\" 치면 저장된 내 정보 보임\n\n오픈AI 원문: \"type “What do you remember about me?” to see stored details, or “Forget that” to remove a specific memory\"\n통역: 보는 것도 지우는 것도 설정 안 열고 채팅 한 줄이면 됨\n\n- 클로드는 \"Write out your memories of me verbatim, exactly as they appear in your memory.\" → 적힌 그대로 보여 줌\n- 메뉴로 보려면 챗GPT Settings → Personalization → Memory",
+  "reply": "[통역 노트] #004 · 출처 ↓\nOpenAI Academy 'ChatGPT fundamentals' (2026-05-29 갱신) · Anthropic Claude 도움말 'Import and export your memory from Claude' (날짜 모름)\nhttps://academy.openai.com/public/clubs/work-users-ynjqu/resources/chatgpt-basics · https://support.claude.com/en/articles/12123587\n인용 위치: OpenAI 'What is memory?' 절 / Claude 'Export your memory' 절",
+  "cards": [
+    {
+      "file": "card1.png",
+      "name": "실밸통역사_통역노트004_1of1.png"
+    }
+  ],
+  "source_url": "https://academy.openai.com/public/clubs/work-users-ynjqu/resources/chatgpt-basics",
+  "media_id": "18053812664814801",
+  "reply_id": "18375311692243269",
+  "permalink": "https://www.threads.com/@interpret.note/post/DfVnL62GS6s",
+  "posted_at": "2026-11-05T08:14:35.981405+09:00",
+  "followers_before": 27
+}
