@@ -1,0 +1,23 @@
+{
+  "key": "20261106-0807-40f9a7",
+  "title": "통역 노트 #005 · 시끄러운 영상, 버리면 손해임",
+  "series": "통역 노트",
+  "number": 5,
+  "variable": "B",
+  "slot": "08:07",
+  "first_line_len": 16,
+  "text": "시끄러운 영상, 버리면 손해임\n갤럭시 갤러리 → 영상 → 편집 → 오디오 → 오디오 지우개 → '소음'\n\n삼성 원문: \"Tap Audio eraser, and then tap the desired audio option, such as Voices, Music, Noise, Crowd, or Nature, to remove it from the video.\"\n통역: 영상은 그대로 두고, 목소리·음악·소음·군중·자연 중 고른 소리만 지워 줌\n\n- 메뉴에 없으면 안 되는 기종일 수 있음 (One UI 6.1 이상 일부 갤럭시)\n- 다 되면 '적용' → '사본 저장' → 고친 영상이 사본으로 갤러리에 저장됨\n- 짧은 소리는 못 잡거나 다른 소리로 착각할 수 있음",
+  "reply": "[통역 노트] #005 · 출처 ↓\nSamsung, 미국 삼성 고객지원 'Use Audio eraser on Samsung phones and tablets' (게시일 모름, 페이지 메타 2026-03-06)\nhttps://www.samsung.com/us/support/answer/ANS10004604/\n인용 위치: 'Gallery' 단계 3번째 문장 / 조건은 첫 단락 아래 'available on select phones and tablets running Android 14 with One UI 6.1 or higher'",
+  "cards": [
+    {
+      "file": "card1.png",
+      "name": "실밸통역사_통역노트005_1of1.png"
+    }
+  ],
+  "source_url": "https://www.samsung.com/us/support/answer/ANS10004604/",
+  "media_id": "18134626459817469",
+  "reply_id": "18116198011862060",
+  "permalink": "https://www.threads.com/@interpret.note/post/DfYL3P9D-RJ",
+  "posted_at": "2026-11-06T08:13:33.502112+09:00",
+  "followers_before": 27
+}
