@@ -1,0 +1,23 @@
+{
+  "key": "20261108-0807-4119a7",
+  "title": "통역 노트 #007 · 업데이트만 하는 실수, 시리 AI 안 켜짐",
+  "series": "통역 노트",
+  "number": 7,
+  "variable": "B",
+  "slot": "08:07",
+  "first_line_len": 23,
+  "text": "업데이트만 하는 실수, 시리 AI 안 켜짐\n이제 한국어 됨. 아이폰 15 Pro 이상, iOS 27.2부터\n\n애플 지원 문서: \"After you update your device, go to Settings, tap or click Siri, then tap or click Try Siri AI (Beta).\"\n통역: 업데이트 끝나도 설정 → Siri → Try Siri AI (Beta)를 직접 눌러야 켜짐\n\n- 기기 언어·시리 언어 둘 다 한국어로 맞춰야 함\n- 사람 몰리면 대기 명단에 걸릴 수 있고, 하루 사용 한도도 있음\n- 한국어 화면에선 메뉴 이름이 다를 수 있음",
+  "reply": "[통역 노트] #007 · 출처 ↓\nApple, 지원 문서 'How to get Siri AI' (2026-11-05) · 뉴스룸 (2026-10-26)\nhttps://support.apple.com/en-us/127893\n인용 위치: 지원 문서 설정 단계 단락(인용)·언어·대기 명단·사용 한도 단락 / iOS 27.2는 뉴스룸 본문",
+  "cards": [
+    {
+      "file": "card1.png",
+      "name": "실밸통역사_통역노트007_1of1.png"
+    }
+  ],
+  "source_url": "https://support.apple.com/en-us/127893",
+  "media_id": "18388098352236688",
+  "reply_id": "18647825233006735",
+  "permalink": "https://www.threads.com/@interpret.note/post/DfdVIC6IO1f",
+  "posted_at": "2026-11-08T08:10:43.519293+09:00",
+  "followers_before": 27
+}
