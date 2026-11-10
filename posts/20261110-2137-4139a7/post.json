@@ -1,0 +1,23 @@
+{
+  "key": "20261110-2137-4139a7",
+  "title": "통역 노트 #008 · 클로드 답 복붙하면 과제 출처 칸에서 막힘",
+  "series": "통역 노트",
+  "number": 8,
+  "variable": "B",
+  "slot": "21:37",
+  "first_line_len": 23,
+  "text": "클로드 답 복붙하면 과제 출처 칸에서 막힘\n답 받은 직후 아래 세 문장을 그대로 붙여 넣기\n\n클로드 공식 원문: \"For each factual claim in your answer, tell me where it came from. Quote the exact passage from the source and include the link or page number. If a claim comes from your general knowledge, label it 'unsourced' so I know what to check first.\"\n통역: 주장마다 출처 구절과 링크(쪽수)를 달고, 그냥 아는 걸로 한 말은 'unsourced'로 표시해 줘\n\n- 'unsourced' 붙은 문장부터 확인하면 됨\n- 달린 링크는 직접 열어 맞는 것만 출처 칸에",
+  "reply": "통역 노트 #008 · 출처 ↓\nAnthropic, Claude Academy 'Building your discernment toolkit' (2026-09-10)\nhttps://academy.claude.com/tutorials/discernment-toolkit\n인용 위치: 5번 Ask Claude for source grounding",
+  "cards": [
+    {
+      "file": "card1.png",
+      "name": "실밸통역사_통역노트008_1of1.png"
+    }
+  ],
+  "source_url": "https://academy.claude.com/tutorials/discernment-toolkit",
+  "media_id": "18485913073112345",
+  "reply_id": "18028537943863317",
+  "permalink": "https://www.threads.com/@interpret.note/post/Dfj7vNlm6p_",
+  "posted_at": "2026-11-10T21:43:33.011757+09:00",
+  "followers_before": 27
+}
