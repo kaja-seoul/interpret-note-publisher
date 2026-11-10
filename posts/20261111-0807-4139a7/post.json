@@ -1,0 +1,23 @@
+{
+  "key": "20261111-0807-4139a7",
+  "title": "통역 노트 #009 · 맥 AI 명령어, 옵션 하나면 큰 모델로 바뀜",
+  "series": "통역 노트",
+  "number": 9,
+  "variable": "B",
+  "slot": "08:07",
+  "first_line_len": 25,
+  "text": "맥 AI 명령어, 옵션 하나면 큰 모델로 바뀜\nmacOS 27 터미널: fm respond \"할 말\" --model pcc\n\n애플 원문: \"It's a much bigger model than the on-device model, so it will perform better on complex problems.\"\n통역: 맥 안에서 도는 AI보다 훨씬 큰 모델이라 어려운 문제에 더 강함\n\n- 맥이 아니라 애플 서버(Private Cloud Compute)에서 돎\n- 쓰는 양에 한도 있음\n- fm은 macOS 27에 기본으로 깔려 있음",
+  "reply": "통역 노트 #009 · 출처 ↓\nEric Gourlaouen(애플 Foundation Models 팀), WWDC26 세션 334 (날짜 모름)\nhttps://developer.apple.com/videos/play/wwdc2026/334/\n인용 위치: 영상 대본 중 'fm respond' 옵션(--model) 설명 부분",
+  "cards": [
+    {
+      "file": "card1.png",
+      "name": "실밸통역사_통역노트009_1of1.png"
+    }
+  ],
+  "source_url": "https://developer.apple.com/videos/play/wwdc2026/334/",
+  "media_id": "18119483599991599",
+  "reply_id": "17914190475473940",
+  "permalink": "https://www.threads.com/@interpret.note/post/DflDqwplDCU",
+  "posted_at": "2026-11-11T08:12:04.793915+09:00",
+  "followers_before": 27
+}
