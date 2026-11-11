@@ -1,0 +1,23 @@
+{
+  "key": "20261111-2137-4149a7",
+  "title": "통역 노트 #010 · 손그림 사진 한 장이 제미나이에서 앱이 됨",
+  "series": "통역 노트",
+  "number": 10,
+  "variable": "B",
+  "slot": "21:37",
+  "first_line_len": 23,
+  "text": "손그림 사진 한 장이 제미나이에서 앱이 됨\n습관 기록표·게임 판 그림 찍어 올리고 Canvas에서 한 줄만 치면 됨\n\n구글 원문: \"Gemini reads your visual and writes the code.\"\n통역: 그림을 보고 제미나이가 코드를 직접 짜 줌\n\n- 쓰는 법: 사진 올리고 Canvas 켠 뒤 Can you code this app?\n- 미리보기 창에서 눌러 보고, 색·글꼴·기능은 바로 고쳐 달라고 하면 됨\n- 되는 요금제·나라는 원문에 안 나옴(모름)",
+  "reply": "[통역 노트] #010 · 출처 ↓\n구글, The Keyword 'Transform a quick drawing into a live app with Gemini' (2026-11-05, 글쓴이 이름 모름)\nhttps://blog.google/innovation-and-ai/products/gemini-app/turn-drawings-into-apps-gemini/\n인용: 본문 'Here's how.' 아래 2번째 단계 끝 문장",
+  "cards": [
+    {
+      "file": "card1.png",
+      "name": "실밸통역사_통역노트010_1of1.png"
+    }
+  ],
+  "source_url": "https://blog.google/innovation-and-ai/products/gemini-app/turn-drawings-into-apps-gemini/",
+  "media_id": "18434297794150029",
+  "reply_id": "18428643499148361",
+  "permalink": "https://www.threads.com/@interpret.note/post/DfmgNkxFXvj",
+  "posted_at": "2026-11-11T21:40:44.762151+09:00",
+  "followers_before": 28
+}
