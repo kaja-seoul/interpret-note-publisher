@@ -1,0 +1,23 @@
+{
+  "key": "20261112-0807-4159a7",
+  "title": "통역 노트 #011 · 챗GPT 카메라에 문서 스캐너 숨어 있음",
+  "series": "통역 노트",
+  "number": 11,
+  "variable": "B",
+  "slot": "08:07",
+  "first_line_len": 22,
+  "text": "챗GPT 카메라에 문서 스캐너 숨어 있음\n카메라 → ⋯ → Scan 누르고 여러 장 찍으면 PDF 하나\n\nOpenAI 원문: \"Capture multiple pages in a row, and ChatGPT automatically combines them into a single PDF, ready to upload to your chat.\"\n통역: 연달아 찍은 여러 장을 챗GPT가 알아서 PDF 하나로 묶어 채팅에 올릴 준비까지 해 줌\n\n- 필기·문서 여러 장을 사진 대신 PDF 한 개로 올림\n- 지금은 iOS 앱에 차례로 풀리는 중 (내 계정엔 아직 없을 수 있음)",
+  "reply": "통역 노트 #011 · 출처 ↓\nOpenAI, ChatGPT 릴리스 노트 (2026-10-01)\nhttps://help.openai.com/en/articles/6825453-chatgpt-release-notes\n'Scan notes and documents more easily with ChatGPT camera' 항목",
+  "cards": [
+    {
+      "file": "card1.png",
+      "name": "실밸통역사_통역노트011_1of1.png"
+    }
+  ],
+  "source_url": "https://help.openai.com/en/articles/6825453-chatgpt-release-notes",
+  "media_id": "18091035035285958",
+  "reply_id": "17895412515683638",
+  "permalink": "https://www.threads.com/@interpret.note/post/Dfno8GskUK_",
+  "posted_at": "2026-11-12T08:16:15.856315+09:00",
+  "followers_before": 28
+}
