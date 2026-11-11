@@ -699,8 +699,11 @@ def cmd_check(a) -> int:
     if not stuck:
         _note(True, f"{now:%m/%d %H:%M} 남은 '승인' 글 없음")
     # 심장박동: 오늘 그 런이 돌았나 (런 로그 DB가 설정돼 있을 때만)
-    if C.RUNLOG_DS:
-        job = C.RUNLOG_MORNING_JOB if now.hour < 12 else C.RUNLOG_EVENING_JOB
+    # 런이 끝났을 시각에만 본다(아침 런 06:40 → 07:30~12:00, 저녁 글감 런 20:10 → 21:00~).
+    # GitHub 예약이 몇 시간 늦게 와서 런보다 먼저 돌면 헛경보가 났다(11/9~11/11).
+    hm = now.hour * 60 + now.minute
+    job = C.RUNLOG_MORNING_JOB if 7 * 60 + 30 <= hm < 12 * 60 else C.RUNLOG_EVENING_JOB if hm >= 21 * 60 else None
+    if C.RUNLOG_DS and job:
         try:
             if run_logged(nt, now.date(), job):
                 _note(True, f"{now:%m/%d} {job} 런 로그 있음")
