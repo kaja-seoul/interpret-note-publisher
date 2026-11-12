@@ -1,0 +1,23 @@
+{
+  "key": "20261112-2137-4159a7",
+  "title": "통역 노트 #012 · 동의했다면 시리 기록이 AI 학습에 쓰임",
+  "series": "통역 노트",
+  "number": 12,
+  "variable": "B",
+  "slot": "21:37",
+  "first_line_len": 22,
+  "text": "동의했다면 시리 기록이 AI 학습에 쓰임\n아이폰 설정 > 개인정보 보호 및 보안 > 분석 및 향상에서 켜고 끔\n\n애플 원문: \"If you opt in to Improve Siri & Apple Intelligence, Apple can also use this data to train foundation models.\"\n통역: 이 항목에 동의하면 애플이 내 시리 데이터를 AI 모델 학습에도 쓸 수 있음\n\n- 스위치 이름: Improve Siri & Apple Intelligence (한글 이름은 다를 수 있음)\n- 선택 항목임. 기기 처음 설정할 때 물어봄\n- 시리 AI 사용자만 해당",
+  "reply": "통역 노트 #012 · 출처 ↓\nApple 지원 문서 'Turn Improve Siri & Apple Intelligence or Improve Siri & Dictation on or off' (2026-09-16)\nhttps://support.apple.com/en-us/127070\n인용 위치: Improve Siri & Apple Intelligence 설명 부분",
+  "cards": [
+    {
+      "file": "card1.png",
+      "name": "실밸통역사_통역노트012_1of1.png"
+    }
+  ],
+  "source_url": "https://support.apple.com/en-us/127070",
+  "media_id": "17938263279408210",
+  "reply_id": "18504241972098715",
+  "permalink": "https://www.threads.com/@interpret.note/post/DfpFVnyIBSw",
+  "posted_at": "2026-11-12T21:43:36.559787+09:00",
+  "followers_before": 28
+}
