@@ -1,0 +1,23 @@
+{
+  "key": "20261113-0807-4169a7",
+  "title": "통역 노트 #013 · 제미나이 과제 채팅을 복붙 없이 노트에 넣음",
+  "series": "통역 노트",
+  "number": 13,
+  "variable": "B",
+  "slot": "08:07",
+  "first_line_len": 24,
+  "text": "제미나이 과제 채팅을 복붙 없이 노트에 넣음\n채팅창에 한 줄 시키면 끝, 개인 구글 계정도 지금 됨\n\n구글 원문: \"Add a copy of this chat to my notebook about Bio 101 course\"\n통역: \"이 채팅, 내 Bio 101 수업 노트북에 복사해 줘\"라고 시키는 예시\n\n- 노트북은 제미나이 앱 안 'Gemini Notebook', 새로 만들기·소스 목록 보기도 채팅으로 됨\n- 기본 켜짐(유럽경제지역만 꺼짐), 끄기는 Settings > Connected Apps\n- 원문 예시는 영어뿐, 한국어로 되는지는 모름",
+  "reply": "통역 노트 #013 · 출처 ↓\n구글, Google Workspace Updates 블로그 (2026-10-23)\nhttps://workspaceupdates.googleblog.com/2026/10/take-actions-on-your-notebooks-from-Gemini-Notebook-directly-in-the-Gemini-app.html\n인용 위치: 예시 프롬프트 목록 \"Add a copy of this chat to my notebook about Bio 101 course\" · Availability · End users 절",
+  "cards": [
+    {
+      "file": "card1.png",
+      "name": "실밸통역사_통역노트013_1of1.png"
+    }
+  ],
+  "source_url": "https://workspaceupdates.googleblog.com/2026/10/take-actions-on-your-notebooks-from-Gemini-Notebook-directly-in-the-Gemini-app.html",
+  "media_id": "18193644175406458",
+  "reply_id": "18417239677080113",
+  "permalink": "https://www.threads.com/@interpret.note/post/DfqNgjpI-E3",
+  "posted_at": "2026-11-13T08:14:19.867725+09:00",
+  "followers_before": 28
+}
