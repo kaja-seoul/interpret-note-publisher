@@ -1,0 +1,23 @@
+{
+  "key": "20261113-2137-4169a7",
+  "title": "통역 노트 #014 · 맥 AI 명령어가 스크린샷도 읽음",
+  "series": "통역 노트",
+  "number": 14,
+  "variable": "B",
+  "slot": "21:37",
+  "first_line_len": 18,
+  "text": "맥 AI 명령어가 스크린샷도 읽음\nmacOS 27이면 캡처한 화면을 터미널에서 바로 물어봄\n\n애플 원문: \"Or the image option, to include an image in your prompt.\"\n통역: 질문 뒤에 --image 파일명만 붙이면 사진째 물어봄\n\n- 복사: fm respond \"What app is the user using in this screenshot?\" --model pcc --image Screenshot.png\n- 원문 예시는 애플 서버 AI(--model pcc)로 씀, 사용 한도 있음. 맥 안 AI로도 되는지는 모름\n- 한국어 질문이 되는지도 원문에 없음",
+  "reply": "통역 노트 #014 · 출처 ↓\nApple, WWDC26 세션 334 \"Build AI-powered scripts with the fm CLI and Python SDK\" (WWDC26)\nhttps://developer.apple.com/videos/play/wwdc2026/334/\n인용 위치: 세션 334 대본, fm respond 옵션 설명과 스크린샷 예시 부분",
+  "cards": [
+    {
+      "file": "card1.png",
+      "name": "실밸통역사_통역노트014_1of1.png"
+    }
+  ],
+  "source_url": "https://developer.apple.com/videos/play/wwdc2026/334/",
+  "media_id": "18100061045658946",
+  "reply_id": "18027100034869518",
+  "permalink": "https://www.threads.com/@interpret.note/post/DfrqfMokT3u",
+  "posted_at": "2026-11-13T21:46:45.692025+09:00",
+  "followers_before": 28
+}
