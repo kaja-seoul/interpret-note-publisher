@@ -1,0 +1,23 @@
+{
+  "key": "20261115-0807-4189a7",
+  "title": "통역 노트 #017 · 아이클라우드 메일, 챗GPT가 대신 뒤짐",
+  "series": "통역 노트",
+  "number": 17,
+  "variable": "B",
+  "slot": "08:07",
+  "first_line_len": 25,
+  "text": "아이클라우드 메일 뒤지기, 챗GPT가 대신 함\n무료 요금제도 됨: 설정 > 플러그인 > iCloud Mail 연결\n\nOpenAI 원문: \"iCloud users can now connect Mail and Calendar to ChatGPT to find emails, catch up on your inbox\"\n통역: 아이클라우드 메일을 챗GPT에 붙이면 메일 찾기, 밀린 메일 훑기를 말로 시킬 수 있음\n\n- 쓰는 법: 연결 뒤 \"지난달 받은 항공권 메일 찾아 줘\"\n- 웹·데스크톱 앱·아이폰 앱에서 됨",
+  "reply": "통역 노트 #017 · 출처 ↓\nOpenAI, ChatGPT 릴리스 노트 (2026-10-27)\nhttps://help.openai.com/en/articles/6825453-chatgpt-release-notes\n인용 위치: 10월 27일 iCloud Mail·Calendar 항목",
+  "cards": [
+    {
+      "file": "card1.png",
+      "name": "실밸통역사_통역노트017_1of1.png"
+    }
+  ],
+  "source_url": "https://help.openai.com/en/articles/6825453-chatgpt-release-notes",
+  "media_id": "18247456039314297",
+  "reply_id": "18095846933185300",
+  "permalink": "https://www.threads.com/@interpret.note/post/DfvXaefHdv8",
+  "posted_at": "2026-11-15T08:16:56.441863+09:00",
+  "followers_before": 28
+}
