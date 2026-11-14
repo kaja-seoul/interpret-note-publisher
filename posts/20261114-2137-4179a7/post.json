@@ -1,0 +1,23 @@
+{
+  "key": "20261114-2137-4179a7",
+  "title": "통역 노트 #016 · 시리가 내 사진·메일 못 보게 막는 법",
+  "series": "통역 노트",
+  "number": 16,
+  "variable": "B",
+  "slot": "21:37",
+  "first_line_len": 21,
+  "text": "시리가 내 사진·메일 못 보게 막는 법\n설정 > Siri > Excluded Apps에 앱을 넣으면 시리·검색·제안이 그 앱을 못 씀\n\n애플 원문: \"Excluded Apps lets you choose which apps Siri, Search, and suggestions can access, all from one setting\"\n통역: 시리·검색·제안이 어떤 앱을 볼지 설정 한 곳에서 고름\n\n- 쓰는 법: Excluded Apps → Add Apps → 뺄 앱 고르기 (한국어 메뉴 이름은 모름)\n- 되는 기기: iOS 27.2, 아이폰 15 Pro·15 Pro Max, 아이폰 16 이후 전 모델",
+  "reply": "통역 노트 #016 · 출처 ↓\n애플, About iOS 27 Updates 지원 문서 (2026-11-09)\nhttps://support.apple.com/en-us/149076\n인용: iOS 27.2 절, Siri AI 항목",
+  "cards": [
+    {
+      "file": "card1.png",
+      "name": "실밸통역사_통역노트016_1of1.png"
+    }
+  ],
+  "source_url": "https://support.apple.com/en-us/149076",
+  "media_id": "18033721268681983",
+  "reply_id": "17981285120915385",
+  "permalink": "https://www.threads.com/@interpret.note/post/DfuOO41IBHc",
+  "posted_at": "2026-11-14T21:37:32.506570+09:00",
+  "followers_before": 28
+}
