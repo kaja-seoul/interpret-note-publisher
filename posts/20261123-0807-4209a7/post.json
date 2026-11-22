@@ -1,0 +1,23 @@
+{
+  "key": "20261123-0807-4209a7",
+  "title": "통역 노트 #020 · 새 AI 기능, 내 앱에 없어도 정상임",
+  "series": "통역 노트",
+  "number": 20,
+  "variable": "B",
+  "slot": "08:07",
+  "first_line_len": 21,
+  "text": "새 AI 기능, 내 앱에 없어도 정상임\n발표문 영어 세 군데만 보면 나한테 언제 오는지 보임\n\n- rolling out → 오늘 다 켜지는 게 아니라 차례로 켜짐\n- in the U.S. → 미국 계정만\n- for Pro users → 유료 요금제만\n\n11/18 제미나이 4 네온 발표도 \"begins rolling out today\", \"for Pro and Ultra subscribers\"\n→ 차례로 켜지고, 발표 대상에 무료 요금제는 없음",
+  "reply": "통역 노트 #020 · 출처 ↓\nKoray Kavukcuoglu, Google 블로그 (2026-11-18)\nhttps://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-4-neon/\n인용 위치: 'Start building with Gemini 4 Neon today' 절",
+  "cards": [
+    {
+      "file": "card1.png",
+      "name": "실밸통역사_통역노트020_1of1.png"
+    }
+  ],
+  "source_url": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-4-neon/",
+  "media_id": "18114231695192230",
+  "reply_id": "18458055919193801",
+  "permalink": "https://www.threads.com/@interpret.note/post/DgD8xOaoyC7",
+  "posted_at": "2026-11-23T08:08:17.038236+09:00",
+  "followers_before": 28
+}
