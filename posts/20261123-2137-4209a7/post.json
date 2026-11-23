@@ -1,0 +1,23 @@
+{
+  "key": "20261123-2137-4209a7",
+  "title": "통역 노트 #021 · 과제용 PDF, 인용부터 시키면 확인이 쉬움",
+  "series": "통역 노트",
+  "number": 21,
+  "variable": "B",
+  "slot": "21:37",
+  "first_line_len": 24,
+  "text": "과제용 PDF, 인용부터 시키면 확인이 쉬움\n질문 앞에 붙일 한 줄: \"답하기 전에, 이 문서에서 관련 문장을 먼저 그대로 인용해 줘\"\n\n클로드 공식 프롬프트 문서의 'ground responses in quotes'\n긴 문서는 인용 먼저, 작업은 그다음\n\n- 인용된 문장을 PDF에서 Ctrl+F(맥은 ⌘F)로 찾아 진짜 있는지 확인\n- 인용이 원문에 없으면 그 답은 믿지 말고 다시 시키기",
+  "reply": "통역 노트 #021 · 출처 ↓\nAnthropic, Claude 프롬프트 문서 (날짜 표기 없음, 2026-11-23 확인)\nhttps://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices\n인용 위치: 'Long context prompting' 절, 'Ground responses in quotes'",
+  "cards": [
+    {
+      "file": "card1.png",
+      "name": "실밸통역사_통역노트021_1of1.png"
+    }
+  ],
+  "source_url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/long-context-tips",
+  "media_id": "18124012502077145",
+  "reply_id": "18132639913897737",
+  "permalink": "https://www.threads.com/@interpret.note/post/DgFZ4glFVTM",
+  "posted_at": "2026-11-23T21:41:53.428959+09:00",
+  "followers_before": 29
+}
