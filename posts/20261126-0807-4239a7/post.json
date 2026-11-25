@@ -1,0 +1,23 @@
+{
+  "key": "20261126-0807-4239a7",
+  "title": "통역 노트 #025 · 제미나이 기록 꺼도 대화는 약 2개월 남음",
+  "series": "통역 노트",
+  "number": 25,
+  "variable": "B",
+  "slot": "08:07",
+  "first_line_len": 23,
+  "text": "제미나이 기록 꺼도 대화는 약 2개월 남음\n과제·메일 대화를 학습에서 빼려고 껐다면, 피드백만 안 보내면 됨\n\n기록을 끄면 앞으로의 대화는 기록 화면에 안 보임\n그래도 약 2개월 저장돼 응답·보호에 쓰이고, 사람이 검토할 수도 있음\n학습엔 안 쓰임, 단 피드백을 보내면 최근 24시간 대화도 같이 수집돼 쓰임\n\n- 처음부터 학습에서 뺄 대화는 'Temporary chat'(임시 채팅)으로 열기\n- 기록 보기·삭제, 자동 삭제 기간은 'Gemini History' 화면에서 고름",
+  "reply": "통역 노트 #025 · 출처 ↓\nGoogle, Gemini Apps Privacy Hub 도움말 (2026-11-24 갱신)\nhttps://support.google.com/gemini/answer/13594961?hl=en\n인용 위치: 'If the History setting is off' 문단('saved for around 2 months'), 'Temporary chats are not used to train' 문장, 피드백 문단('last 24 hours of your chats'), 'Visit Gemini History' 문장",
+  "cards": [
+    {
+      "file": "card1.png",
+      "name": "실밸통역사_통역노트025_1of1.png"
+    }
+  ],
+  "source_url": "https://support.google.com/gemini/answer/13594961?hl=en",
+  "media_id": "18119527229043809",
+  "reply_id": "18116483699127448",
+  "permalink": "https://www.threads.com/@interpret.note/post/DgLrw6jj31x",
+  "posted_at": "2026-11-26T08:13:35.407326+09:00",
+  "followers_before": 30
+}
