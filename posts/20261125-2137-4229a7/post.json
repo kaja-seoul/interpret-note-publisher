@@ -1,0 +1,23 @@
+{
+  "key": "20261125-2137-4229a7",
+  "title": "통역 노트 #024 · 챗GPT 받아쓰기, 이제 10분에 안 끊김",
+  "series": "통역 노트",
+  "number": 24,
+  "variable": "B",
+  "slot": "21:37",
+  "first_line_len": 23,
+  "text": "챗GPT 받아쓰기, 이제 10분에 안 끊김\n과제 초안·생각 정리를 길게 말해도 중간에 다시 안 눌러도 됨\n\n11/18 업데이트에서 녹음 10분 제한을 없앰\n새 받아쓰기(Live Dictation)는 전 요금제에 풀리는 중\n\n- 아이폰·안드로이드·웹·데스크톱 앱 전부 해당\n- 차례로 켜지는 중이라, 아직 끊기면 순서 대기일 수 있음",
+  "reply": "통역 노트 #024 · 출처 ↓\nOpenAI, ChatGPT 릴리스 노트 (2026-11-18)\nhttps://help.openai.com/en/articles/6825453-chatgpt-release-notes\n인용 위치: 11/18 Live Dictation 항목('removed the 10-minute recording limit', 'rolling out globally to all ChatGPT plans')",
+  "cards": [
+    {
+      "file": "card1.png",
+      "name": "실밸통역사_통역노트024_1of1.png"
+    }
+  ],
+  "source_url": "https://help.openai.com/en/articles/6825453-chatgpt-release-notes",
+  "media_id": "18078959270757779",
+  "reply_id": "18150979654669744",
+  "permalink": "https://www.threads.com/@interpret.note/post/DgKjaz9FWw2",
+  "posted_at": "2026-11-25T21:41:24.855741+09:00",
+  "followers_before": 29
+}
