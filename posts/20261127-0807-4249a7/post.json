@@ -1,0 +1,23 @@
+{
+  "key": "20261127-0807-4249a7",
+  "title": "통역 노트 #027 · 제미나이 Task 모드, 한국도 무료 대상",
+  "series": "통역 노트",
+  "number": 27,
+  "variable": "B",
+  "slot": "08:07",
+  "first_line_len": 23,
+  "text": "제미나이 Task 모드, 한국도 무료 대상\n채팅 대신 할 일을 맡기는 모드가 돈 안 내고 쓰게 풀리는 중임\n\n구글이 11/17 발표했고 미국·일본·한국·캐나다·호주·인도가 대상임\n켜는 법은 제미나이 홈 화면 토글을 Chat에서 Task로 바꾸고 할 일을 적으면 됨\n\n- 발표 글의 고지서 분석·충전기 비교는 글쓴이가 미국에서 쓴 사례임\n- 문자로 시키기(미국 번호 필요)·메일 전달, 고급 기능 일부는 미국부터임\n- 결제는 'Buy' 누르기 전에 확인이나 사전 승인을 받게 설계됨\n\n한국에선 토글부터 바꿔 보고, 내 할 일이 되는지 하나씩 시켜 보면 됨",
+  "reply": "통역 노트 #027 · 출처 ↓\nJosh Woodward, Google 블로그 (2026-11-17)\nhttps://blog.google/innovation-and-ai/products/gemini-app/tasks-in-gemini-free-new-features/\n인용 위치: 6개국 무료 'rolling out free of charge' 문단, Chat→Task 토글 문장, 'starting in the U.S.' 문단, 문자 기능 'US phone number' 각주",
+  "cards": [
+    {
+      "file": "card1.png",
+      "name": "실밸통역사_통역노트027_1of1.png"
+    }
+  ],
+  "source_url": "https://blog.google/innovation-and-ai/products/gemini-app/tasks-in-gemini-free-new-features/",
+  "media_id": "18155524273555500",
+  "reply_id": "18075296219785989",
+  "permalink": "https://www.threads.com/@interpret.note/post/DgOP4WGj2OQ",
+  "posted_at": "2026-11-27T08:07:38.267861+09:00",
+  "followers_before": 30
+}
