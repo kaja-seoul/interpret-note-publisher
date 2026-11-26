@@ -1,0 +1,23 @@
+{
+  "key": "20261126-2137-4239a7",
+  "title": "통역 노트 #026 · 시험 기간 공부 모드, 결제 없이 됨",
+  "series": "통역 노트",
+  "number": 26,
+  "variable": "B",
+  "slot": "21:37",
+  "first_line_len": 20,
+  "text": "시험 기간 공부 모드, 결제 없이 됨\n시험 앞두고 구독 고민 중이어도, 공부 모드는 무료 플랜에 이미 있음\n\n챗GPT 요금표(미국 표시) Free 열에 'Study mode'가 Yes로 적혀 있음\n다만 무료에선 파일 올리는 대화와 딥 리서치가 'Limited'임\n\n- 공부 모드 → 무료로 열려 있음\n- 파일 올린 대화 → 제한 있음\n- 딥 리서치 → 제한 있음",
+  "reply": "통역 노트 #026 · 출처 ↓\nOpenAI, ChatGPT 요금 페이지 (날짜 표기 없음, 2026-11-26 확인)\nhttps://chatgpt.com/pricing\n인용 위치: 비교표 'Study mode' 줄(Free 열 Yes), Free 카드 'Limited messages with uploads'·'Limited deep research'",
+  "cards": [
+    {
+      "file": "card1.png",
+      "name": "실밸통역사_통역노트026_1of1.png"
+    }
+  ],
+  "source_url": "https://chatgpt.com/pricing",
+  "media_id": "18134099386704072",
+  "reply_id": "18060702368572394",
+  "permalink": "https://www.threads.com/@interpret.note/post/DgNIMe4m8mJ",
+  "posted_at": "2026-11-26T21:41:14.166764+09:00",
+  "followers_before": 30
+}
