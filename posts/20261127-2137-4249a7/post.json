@@ -1,0 +1,23 @@
+{
+  "key": "20261127-2137-4249a7",
+  "title": "통역 노트 #028 · 한 달간 클로드 뭐에 썼나, 무료로 정리됨",
+  "series": "통역 노트",
+  "number": 28,
+  "variable": "B",
+  "slot": "21:37",
+  "first_line_len": 23,
+  "text": "한 달간 클로드 뭐에 썼나, 무료로 정리됨\n무료 플랜도 설정 안에 한 달 사용 돌아보기가 숨어 있음\n\n주제별 비율(%), 가장 많이 쓴 요일·시간대, 대화 수까지 나옴\n새로 써 볼 만한 쓰임새와 다음 단계도 따로 짚어 줌\n\n- 웹·데스크톱에서 Settings > Wellbeing > Reflect > View (앱은 아직)\n- 메모리 켜야 보임(Settings > Your Claude > Generate memory from chat history)\n- 순차 공개 중이라 안 보이면 나중에 다시 확인\n\n보는 건 사용량 한도에 안 들어가고, 기간은 3개월·6개월·1년으로도 바뀜",
+  "reply": "통역 노트 #028 · 출처 ↓\nAnthropic, Claude 도움말 (날짜 표기 없음, 2026-11-27 확인)\nhttps://support.claude.com/en/articles/15672559-see-your-monthly-recap\n인용 위치: 첫 단락(보여 주는 것), 대상 플랜·웹/데스크톱 안내, Settings > Wellbeing > Reflect 경로, 메모리 조건·순차 공개·사용량 한도 안내",
+  "cards": [
+    {
+      "file": "card1.png",
+      "name": "실밸통역사_통역노트028_1of1.png"
+    }
+  ],
+  "source_url": "https://support.claude.com/en/articles/15672559-see-your-monthly-recap",
+  "media_id": "18082148660421627",
+  "reply_id": "17897456511617276",
+  "permalink": "https://www.threads.com/@interpret.note/post/DgPs4QrHKfd",
+  "posted_at": "2026-11-27T21:40:16.953071+09:00",
+  "followers_before": 30
+}
