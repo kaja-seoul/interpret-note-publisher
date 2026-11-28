@@ -1,0 +1,23 @@
+{
+  "key": "20261128-2137-4259a7",
+  "title": "통역 노트 #030 · 무료 챗GPT 메뉴에 6.2 없으면 정상임",
+  "series": "통역 노트",
+  "number": 30,
+  "variable": "B",
+  "slot": "21:37",
+  "first_line_len": 23,
+  "text": "무료 챗GPT 메뉴에 6.2 없으면 정상임\n기사 보고 모델 메뉴 뒤져도, 이번 GPT-6.2 채팅 탭 버전은 유료 요금제 4개만 대상임\n\n기사엔 '나왔다'만 있고, 누구용인지는 발표 영어의 for 뒤에 있음\n\n- for Plus, Pro, Business and Enterprise → 이 4개 유료 요금제에 풀리는 중\n- 무료는 이번 4개 밖 → 메뉴에 안 떠도 고장 아님\n- optimized for the chat tab → 채팅 탭용 버전임\n\n다음 출시 기사도 for 뒤에 내 요금제가 있는지부터 보면 됨",
+  "reply": "통역 노트 #030 · 출처 ↓\nOpenAI, ChatGPT Release Notes (2026-11-23)\nhttps://help.openai.com/en/articles/6825453-chatgpt-release-notes\n인용 위치: 2026-11-23 항목, GPT-6.2 채팅 탭 버전 문장의 'for Plus, Pro, Business and Enterprise tiers' 구절",
+  "cards": [
+    {
+      "file": "card1.png",
+      "name": "실밸통역사_통역노트030_1of1.png"
+    }
+  ],
+  "source_url": "https://help.openai.com/en/articles/6825453-chatgpt-release-notes",
+  "media_id": "18339497872263931",
+  "reply_id": "18116574377611813",
+  "permalink": "https://www.threads.com/@interpret.note/post/DgSRxX7G5nT",
+  "posted_at": "2026-11-28T21:41:07.970855+09:00",
+  "followers_before": 33
+}
